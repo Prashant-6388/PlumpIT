@@ -296,8 +296,10 @@ public class DataCalculator extends javax.swing.JFrame {
         landscapeAreaInput = new javax.swing.JTextField();
         outsideAreaBtn = new javax.swing.JButton();
         clubHouseAreaInput = new javax.swing.JTextField();
-        landscapeAreaWater = new javax.swing.JComboBox<>();
         swimmingPoolCapacity = new javax.swing.JComboBox<>();
+        landscapeAreaWater = new javax.swing.JComboBox<>();
+        jLabel53 = new javax.swing.JLabel();
+        jLabel70 = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         towerDataTable = new javax.swing.JTable();
         typePanel = new javax.swing.JPanel();
@@ -955,9 +957,18 @@ public class DataCalculator extends javax.swing.JFrame {
 
         clubHouseAreaInput.setMinimumSize(new java.awt.Dimension(80, 30));
 
-        landscapeAreaWater.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "4", "5", "6", "7", "8" }));
+        swimmingPoolCapacity.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "4", "5", "6", "7", "8" }));
+        swimmingPoolCapacity.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                swimmingPoolCapacityActionPerformed(evt);
+            }
+        });
 
-        swimmingPoolCapacity.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "6", "8" }));
+        landscapeAreaWater.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "5", "6", "8" }));
+
+        jLabel53.setText("<html>lit per  sq.m of green area</html>");
+
+        jLabel70.setText("<html>% of Pool Capacity </html>");
 
         javax.swing.GroupLayout outsideAreaPanelLayout = new javax.swing.GroupLayout(outsideAreaPanel);
         outsideAreaPanel.setLayout(outsideAreaPanelLayout);
@@ -978,12 +989,17 @@ public class DataCalculator extends javax.swing.JFrame {
                             .addComponent(clubHouseAreaInput, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(swimmingPoolCapacity, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(landscapeAreaWater, 0, 1, Short.MAX_VALUE)))
+                            .addComponent(landscapeAreaWater, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(swimmingPoolCapacity, 0, 1, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel53, javax.swing.GroupLayout.DEFAULT_SIZE, 170, Short.MAX_VALUE)
+                            .addComponent(jLabel70)))
                     .addGroup(outsideAreaPanelLayout.createSequentialGroup()
                         .addGap(39, 39, 39)
-                        .addComponent(outsideAreaBtn)))
-                .addGap(0, 23, Short.MAX_VALUE))
+                        .addComponent(outsideAreaBtn)
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addGap(6, 6, 6))
         );
         outsideAreaPanelLayout.setVerticalGroup(
             outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -992,11 +1008,13 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel7)
                     .addComponent(landscapeAreaInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel53, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(landscapeAreaWater, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel8)
                     .addComponent(swimmingAreaInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel70, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(swimmingPoolCapacity, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -1004,7 +1022,7 @@ public class DataCalculator extends javax.swing.JFrame {
                     .addComponent(clubHouseAreaInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(outsideAreaBtn)
-                .addContainerGap(26, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         towerDataTable.setModel(new javax.swing.table.DefaultTableModel(
@@ -1967,7 +1985,7 @@ public class DataCalculator extends javax.swing.JFrame {
         try {
             PDFGenerator.generateWaterDemandPDF("D:\\Programming\\GUI\\NB\\PlumbIT\\pdf", 
                         standardValMap, towersList, officesList, outsideAreaMap, 
-                        landscapeAreaWater.getSelectedItem().toString(), swimmingPoolCapacity.getSelectedItem().toString());
+                        swimmingPoolCapacity.getSelectedItem().toString(), landscapeAreaWater.getSelectedItem().toString());
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
@@ -2365,6 +2383,10 @@ public class DataCalculator extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_peopertTypeSelectorActionPerformed
 
+    private void swimmingPoolCapacityActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_swimmingPoolCapacityActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_swimmingPoolCapacityActionPerformed
+
     private void generateWaterDemandPDF() {
         
     }
@@ -2473,6 +2495,7 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel50;
     private javax.swing.JLabel jLabel51;
     private javax.swing.JLabel jLabel52;
+    private javax.swing.JLabel jLabel53;
     private javax.swing.JLabel jLabel54;
     private javax.swing.JLabel jLabel55;
     private javax.swing.JLabel jLabel56;
@@ -2491,6 +2514,7 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel68;
     private javax.swing.JLabel jLabel69;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel70;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JLabel jLableStdFrictionLoss;

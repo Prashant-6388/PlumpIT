@@ -24,6 +24,7 @@ import java.awt.Color;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -73,9 +74,19 @@ public class PDFGenerator {
         document.open();
         addWaterCriteriaTable(document, standardValMap, landscapeAreaPercent, swimmingPoolCapacityPercent);
 //        createWaterDemandTable(document);
+        Map<String, Integer> domsticWaterDemand = new HashMap<>();
+        Map<String, Integer> flushWaterDemand = new HashMap<>();
+        Map<String, Integer> stpWaterDemand = new HashMap<>();
+        
         createWaterDemandDescription(document);
         createTowerWaterDemand(document, standardValMap, towersList);
         createMiscellaneousTable(document, standardValMap, outsideAreaMap, landscapeAreaPercent, swimmingPoolCapacityPercent);
+        
+//        for (Entry<String, Integer> entry : totalWaterDemand.entrySet()) {
+//            Object key = entry.getKey();
+//            Object val = entry.getValue();
+//            System.out.println(key + " : " + val);
+//        } 
         pdfWriter.flush();
         document.close();
     }
@@ -260,70 +271,70 @@ public class PDFGenerator {
         float[] columnDefinitionSize = {30F, 80F, 50F, 65F, 35F, 50F, 40F, 35F, 50F, 40F, 50F, 60F};
         PdfPTable table = new PdfPTable(columnDefinitionSize);
         table.setWidthPercentage(100);
-        towersList.forEach(new Consumer<TowerData>() {
-            @Override
-            public void accept(TowerData towerData) {
-                addTableCell(table, "Tower " + towerData.getName(), courierBold,
-                        new CellStyle(0, 12, Element.ALIGN_CENTER, Element.ALIGN_CENTER));
-                int totalDomesticConsumption = 0;
-                int totalFlushingConsumption = 0;
-                int totalGrossConsumption = 0;
-                int totalWaterToSewer = 0;
-                int totalFlats = 0;
-                int index = 1;
-                TreeMap<StandardType, Integer> flatsData = towerData.getFlatsData();
-                Set<StandardType> keySet = flatsData.keySet();
-                Iterator<StandardType> iterator = keySet.iterator();
-                while (iterator.hasNext()) {
-                    StandardType type = iterator.next();
-                    Integer numOfFlats = flatsData.get(type);
-                    if (numOfFlats > 0) {
-                        //s.no
-                        addTableCell(table, String.valueOf(index), courier);
-                        //flat type
-                        addTableCell(table, type.getValue(), courier);
-                        //number of flats
-                        addTableCell(table, String.valueOf(numOfFlats), courier);
-                        //Total population of type
-                        StandardValues standardVal = standardValMap.get(type);
-                        String standardValue = DataFormater.getStandardValue(standardVal);
-                        int pplForType = Integer.parseInt(standardValue);
-                        int totalPopulation = numOfFlats * pplForType;
-                        addTableCell(table, String.valueOf(totalPopulation), courier);
-                        //domestic consumption per type
-                        int domesticConsumption = (int) standardValMap.get(StandardType.WATER_DEMAND).getValue() * 2 / 3;
-                        addTableCell(table, String.valueOf(domesticConsumption), courier);
-                        //total domestic water consumption
-                        int totalDomesticWaterConsumption = totalPopulation * domesticConsumption;
-                        addTableCell(table, String.valueOf(totalDomesticWaterConsumption), courier);
-                        //flow to sewer for domestin in %
-                        int domesticToSewerPercentage = 90;
-                        addTableCell(table, String.valueOf(domesticToSewerPercentage), courier);
-                        //flushing water consumption per person
-                        int flushWaterConsumptionPerPerson = (int) standardValMap.get(StandardType.WATER_DEMAND).getValue() * 1 / 3;
-                        addTableCell(table, String.valueOf(flushWaterConsumptionPerPerson), courier);
-                        //Total flushing water consumption
-                        int totalFlushWaterConsumption = flushWaterConsumptionPerPerson * totalPopulation;
-                        addTableCell(table, String.valueOf(totalFlushWaterConsumption), courier);
-                        //flushing water flow to sewer in %
-                        int flushingToSewerPercentage = 100;
-                        addTableCell(table, String.valueOf(flushingToSewerPercentage), courier);
-                        //gross water consumption
-                        int grossWaterConsumption
-                                = totalDomesticWaterConsumption + totalFlushWaterConsumption;
-                        addTableCell(table, String.valueOf(grossWaterConsumption), courier);
-                        //flow to sewer
-                        double flowToSewer
-                                = totalDomesticWaterConsumption * 0.9 + totalFlushWaterConsumption;
-                        addTableCell(table, String.valueOf(flowToSewer), courier);
+        int totalWaterDemandDomestic = 0;
+        int totalWaterDemandFlush = 0;
+        for (int i = 0; i < towersList.size(); i++) {
+            TowerData towerData = towersList.get(i);
+            addTableCell(table, "Tower " + towerData.getName(), courierBold,
+                    new CellStyle(0, 12, Element.ALIGN_CENTER, Element.ALIGN_CENTER));
+            int totalDomesticConsumption = 0;
+            int totalFlushingConsumption = 0;
+            int totalGrossConsumption = 0;
+            int totalWaterToSewer = 0;
+            int totalFlats = 0;
+            int index = 1;
+            TreeMap<StandardType, Integer> flatsData = towerData.getFlatsData();
+            Set<StandardType> keySet = flatsData.keySet();
+            Iterator<StandardType> iterator = keySet.iterator();
+            while (iterator.hasNext()) {
+                StandardType type = iterator.next();
+                Integer numOfFlats = flatsData.get(type);
+                if (numOfFlats > 0) {
+                    //s.no
+                    addTableCell(table, String.valueOf(index), courier);
+                    //flat type
+                    addTableCell(table, type.getValue(), courier);
+                    //number of flats
+                    addTableCell(table, String.valueOf(numOfFlats), courier);
+                    //Total population of type
+                    StandardValues standardVal = standardValMap.get(type);
+                    String standardValue = DataFormater.getStandardValue(standardVal);
+                    int pplForType = Integer.parseInt(standardValue);
+                    int totalPopulation = numOfFlats * pplForType;
+                    addTableCell(table, String.valueOf(totalPopulation), courier);
+                    //domestic consumption per type
+                    int domesticConsumption = (int) standardValMap.get(StandardType.WATER_DEMAND).getValue() * 2 / 3;
+                    addTableCell(table, String.valueOf(domesticConsumption), courier);
+                    //total domestic water consumption
+                    int totalDomesticWaterConsumption = totalPopulation * domesticConsumption;
+                    addTableCell(table, String.valueOf(totalDomesticWaterConsumption), courier);
+                    //flow to sewer for domestin in %
+                    int domesticToSewerPercentage = 90;
+                    addTableCell(table, String.valueOf(domesticToSewerPercentage), courier);
+                    //flushing water consumption per person
+                    int flushWaterConsumptionPerPerson = (int) standardValMap.get(StandardType.WATER_DEMAND).getValue() * 1 / 3;
+                    addTableCell(table, String.valueOf(flushWaterConsumptionPerPerson), courier);
+                    //Total flushing water consumption
+                    int totalFlushWaterConsumption = flushWaterConsumptionPerPerson * totalPopulation;
+                    addTableCell(table, String.valueOf(totalFlushWaterConsumption), courier);
+                    //flushing water flow to sewer in %
+                    int flushingToSewerPercentage = 100;
+                    addTableCell(table, String.valueOf(flushingToSewerPercentage), courier);
+                    //gross water consumption
+                    int grossWaterConsumption
+                            = totalDomesticWaterConsumption + totalFlushWaterConsumption;
+                    addTableCell(table, String.valueOf(grossWaterConsumption), courier);
+                    //flow to sewer
+                    double flowToSewer
+                            = totalDomesticWaterConsumption * 0.9 + totalFlushWaterConsumption;
+                    addTableCell(table, String.valueOf(flowToSewer), courier);
 
-                        totalDomesticConsumption += totalDomesticWaterConsumption;
-                        totalFlushingConsumption += totalFlushWaterConsumption;
-                        totalGrossConsumption += grossWaterConsumption;
-                        totalWaterToSewer += flowToSewer;
-                        totalFlats += numOfFlats;
-                        index++;
-                    }
+                    totalDomesticConsumption += totalDomesticWaterConsumption;
+                    totalFlushingConsumption += totalFlushWaterConsumption;
+                    totalGrossConsumption += grossWaterConsumption;
+                    totalWaterToSewer += flowToSewer;
+                    totalFlats += numOfFlats;
+                    index++;
                 }
                 addTableCell(table, "", courier);
                 addTableCell(table, "Total", courierBold);
@@ -337,10 +348,13 @@ public class PDFGenerator {
                 addTableCell(table, "", courier);
                 addTableCell(table, String.valueOf(totalGrossConsumption), courierBold);
                 addTableCell(table, String.valueOf(totalWaterToSewer), courierBold);
-
+                
+                totalWaterDemandDomestic += totalDomesticConsumption;
+                totalWaterDemandFlush += totalFlushingConsumption;
             }
-        });
-
+        }
+//        totalWaterDemand.put("Domestic",totalWaterDemandDomestic);
+//        totalWaterDemand.put("Flush",totalWaterDemandFlush);
         document.add(table);
     }
     
@@ -476,13 +490,13 @@ public class PDFGenerator {
         int waterReqForLandscapeArea = Integer.parseInt(landscapeAreaPercent);
         addTableCell(table, String.valueOf(waterReqForLandscapeArea), courier);
 
-        int landscapeWaterReq = landscapeArea * waterReqForLandscapeArea;
-        addTableCell(table, String.valueOf(landscapeWaterReq), courier);
+        int landscapeFlushWaterReq = landscapeArea * waterReqForLandscapeArea;
+        addTableCell(table, String.valueOf(landscapeFlushWaterReq), courier);
         addTableCell(table, "0", courier);
 
-        addTableCell(table, String.valueOf(landscapeWaterReq), courier);
+        addTableCell(table, String.valueOf(landscapeFlushWaterReq), courier);
         addTableCell(table, "0", courier);
-        return landscapeWaterReq;
+        return landscapeFlushWaterReq;
     }
 
 }
