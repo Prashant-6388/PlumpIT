@@ -4,6 +4,7 @@
  */
 package com.pc.plumbit;
 
+import com.formdev.flatlaf.FlatLightLaf;
 import com.pc.plumbit.enums.StandardType;
 import com.pc.exceptions.InvalidInputException;
 import com.pc.initializer.DataInitializer;
@@ -11,21 +12,27 @@ import com.pc.plumbit.generator.PDFGenerator;
 import com.pc.plumbit.model.StandardValues;
 import com.pc.plumbit.model.TowerData;
 import com.pc.utils.DataFormater;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
 import javax.swing.table.DefaultTableModel;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -33,6 +40,7 @@ import javax.swing.table.DefaultTableModel;
  */
 public class DataCalculator extends javax.swing.JFrame {
 
+    Logger log = LoggerFactory.getLogger(DataCalculator.class);
     private List<TowerData> towersList = new ArrayList<>();
     private List<TreeMap<StandardType,Integer>> officesList = new ArrayList<>();
     private TreeMap<StandardType,Integer> outsideAreaMap = new TreeMap<>();
@@ -41,14 +49,19 @@ public class DataCalculator extends javax.swing.JFrame {
     private DefaultTableModel dtmOffice;
     private DefaultTableModel dtmOfficeOverview = new DefaultTableModel(0, 0);
     private DefaultTableModel dtmTowerDataOverview = new DefaultTableModel(0, 0);
+    private DefaultTableModel dtmGroupedTowerTable = new DefaultTableModel(0, 0);    
     public static final String TYPE_RESIDENTIAL="Residential";
     public static final String TYPE_COMMERTIAL="Commertial";
+    private List<String> towerNameList = new ArrayList<>();
+    private List<List<String>> groupedTowerNamesList = new ArrayList<>();
     public static Font baseFont = new Font("Segoe UI", Font.PLAIN, 12);
     /**
      * Creates new form DataCalculator
      */
     public DataCalculator() {
         initComponents();
+        log.info("starting applicatin : "+LocalDateTime.now());
+
         initConfigs();
         initTowerTable();
         initOfficeTable();
@@ -74,6 +87,10 @@ public class DataCalculator extends javax.swing.JFrame {
         dtmTowerDataOverview.addColumn("<html><b>Studio</b></html>");
         towerDataOveriewTable.setModel(dtmTowerDataOverview);
         
+        /*dtmGroupedTowerTable.addColumn("Nr");
+        dtmGroupedTowerTable.addColumn("Grouped Towers");
+        towerGroupTable.setModel(dtmGroupedTowerTable);*/
+        
         peopertTypeSelector.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JComboBox cb = (JComboBox) e.getSource();
@@ -88,6 +105,9 @@ public class DataCalculator extends javax.swing.JFrame {
                 }
             }
         });
+        
+        towerGroupPanel.setLayout(new GridLayout(20,1));
+        DataInitializer.setTableStyling(towerGroupTable);
     }
     
     private void initTowerTable() {
@@ -165,8 +185,13 @@ public class DataCalculator extends javax.swing.JFrame {
         stdResidualHeadFire.setText(DataFormater.getStandardValue(standardValues.get(StandardType.RESIDUAL_HEAD_FIRE)));
         stdFrictionLossInput.setText(DataFormater.getStandardValue(standardValues.get(StandardType.FRICTION_LOSS)));
         
+        domesticSewerPercent.setText(DataFormater.getStandardValue(standardValues.get(StandardType.FLOW_TO_SEWER_DOM)));
+        flushSewerPercent.setText(DataFormater.getStandardValue(standardValues.get(StandardType.FLOW_TO_SEWER_FLS)));
+        rawWaterTankPercent.setText(DataFormater.getStandardValue(standardValues.get(StandardType.RAW_WATER_TANK)));
+        domesticWaterTankPercent.setText(DataFormater.getStandardValue(standardValues.get(StandardType.DOMESTIC_TANK)));
+        stpFlushingTank.setText(DataFormater.getStandardValue(standardValues.get(StandardType.STP_FLUSHING_TANK)));
+        
     }
-    
     
     private void updateStandardFieldEditiability(boolean allowEdit){
         peoplePer1BHKInput.setEditable(allowEdit);
@@ -201,10 +226,14 @@ public class DataCalculator extends javax.swing.JFrame {
         stdResidualHeadPlumbing.setEditable(allowEdit);
         stdResidualHeadFire.setEditable(allowEdit);
         stdFrictionLossInput.setEditable(allowEdit);
+        
+        domesticSewerPercent.setEditable(allowEdit);
+        flushSewerPercent.setEditable(allowEdit);
+        rawWaterTankPercent.setEditable(allowEdit);
+        domesticWaterTankPercent.setEditable(allowEdit);
+        stpFlushingTank.setEditable(allowEdit);
     }
     
-    
-
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -285,6 +314,18 @@ public class DataCalculator extends javax.swing.JFrame {
         stdResidualHeadFire = new javax.swing.JTextField();
         jLableStdFrictionLoss = new javax.swing.JLabel();
         jLabel58 = new javax.swing.JLabel();
+        jPanel7 = new javax.swing.JPanel();
+        jLabel71 = new javax.swing.JLabel();
+        jLabel72 = new javax.swing.JLabel();
+        domesticSewerPercent = new javax.swing.JTextField();
+        jLabel73 = new javax.swing.JLabel();
+        flushSewerPercent = new javax.swing.JTextField();
+        jLabel74 = new javax.swing.JLabel();
+        rawWaterTankPercent = new javax.swing.JTextField();
+        jLabel75 = new javax.swing.JLabel();
+        domesticWaterTankPercent = new javax.swing.JTextField();
+        jLabel76 = new javax.swing.JLabel();
+        stpFlushingTank = new javax.swing.JTextField();
         inputDataPanel = new javax.swing.JPanel();
         mainPanel = new javax.swing.JPanel();
         peopertTypeSelector = new javax.swing.JComboBox<>();
@@ -334,6 +375,13 @@ public class DataCalculator extends javax.swing.JFrame {
         inputDataNextBtn = new javax.swing.JButton();
         jScrollPane4 = new javax.swing.JScrollPane();
         officeDataTable = new javax.swing.JTable();
+        jPanel8 = new javax.swing.JPanel();
+        jScrollPane5 = new javax.swing.JScrollPane();
+        towerGroupTable = new javax.swing.JTable();
+        groupTowers = new javax.swing.JButton();
+        towerGroupScrollPane = new javax.swing.JScrollPane();
+        towerGroupPanel = new javax.swing.JPanel();
+        clearGroupedTowerBtn = new javax.swing.JButton();
         overviewPanel = new javax.swing.JPanel();
         waterDemandPDFBtn = new javax.swing.JButton();
         populationCriteriaPanel = new javax.swing.JPanel();
@@ -350,6 +398,11 @@ public class DataCalculator extends javax.swing.JFrame {
         jPanel6 = new javax.swing.JPanel();
         jScrollPane7 = new javax.swing.JScrollPane();
         towerDataOveriewTable = new javax.swing.JTable();
+        jPanel9 = new javax.swing.JPanel();
+        projectNameInput = new javax.swing.JTextField();
+        jLabel77 = new javax.swing.JLabel();
+        jLabel78 = new javax.swing.JLabel();
+        pdfLocationInput = new javax.swing.JTextField();
         waterDemandTab = new javax.swing.JPanel();
         jPanel4 = new javax.swing.JPanel();
         jScrollPane2 = new javax.swing.JScrollPane();
@@ -857,7 +910,7 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel57, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(stdExtraAreaCatered, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(15, Short.MAX_VALUE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
@@ -888,6 +941,76 @@ public class DataCalculator extends javax.swing.JFrame {
         jLabel58.setText("DESIGN CRITERIA FOR FIRE FIGHTING");
         jPanel3.add(jLabel58, new org.netbeans.lib.awtextra.AbsoluteConstraints(51, 6, -1, -1));
 
+        jLabel71.setBackground(new java.awt.Color(204, 255, 255));
+        jLabel71.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel71.setForeground(new java.awt.Color(0, 0, 255));
+        jLabel71.setText("Others");
+
+        jLabel72.setText("Domestic Sewer %");
+
+        jLabel73.setText("Flush Sewer %");
+
+        jLabel74.setText("RAW WATER TANK %");
+
+        jLabel75.setText("OHT DOMESTIC TANK %");
+
+        jLabel76.setText("FLUSHING TANK (days)");
+
+        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
+        jPanel7.setLayout(jPanel7Layout);
+        jPanel7Layout.setHorizontalGroup(
+            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel7Layout.createSequentialGroup()
+                .addGap(77, 77, 77)
+                .addComponent(jLabel71, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(jPanel7Layout.createSequentialGroup()
+                .addGap(23, 23, 23)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel76, javax.swing.GroupLayout.DEFAULT_SIZE, 147, Short.MAX_VALUE)
+                    .addComponent(jLabel72, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel73, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel75, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel74, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(domesticSewerPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(flushSewerPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(rawWaterTankPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(domesticWaterTankPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(stpFlushingTank, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(19, 19, 19))
+        );
+        jPanel7Layout.setVerticalGroup(
+            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel7Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel71)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(domesticSewerPercent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel7Layout.createSequentialGroup()
+                        .addGap(3, 3, 3)
+                        .addComponent(jLabel72, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(flushSewerPercent)
+                    .addComponent(jLabel73, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(rawWaterTankPercent)
+                    .addComponent(jLabel74, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(domesticWaterTankPercent)
+                    .addComponent(jLabel75, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel76, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(stpFlushingTank))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout inputCriteriaFormLayout = new javax.swing.GroupLayout(inputCriteriaForm);
         inputCriteriaForm.setLayout(inputCriteriaFormLayout);
         inputCriteriaFormLayout.setHorizontalGroup(
@@ -904,7 +1027,9 @@ public class DataCalculator extends javax.swing.JFrame {
                             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(consumptionParamPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 312, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 312, Short.MAX_VALUE)
+                            .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(inputCriteriaFormLayout.createSequentialGroup()
                         .addGap(241, 241, 241)
                         .addComponent(inputCriteriaTabNextBtn)))
@@ -923,10 +1048,12 @@ public class DataCalculator extends javax.swing.JFrame {
                             .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(consumptionParamPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGroup(inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addGap(3, 3, 3)
                 .addComponent(inputCriteriaTabNextBtn)
-                .addContainerGap(84, Short.MAX_VALUE))
+                .addContainerGap(102, Short.MAX_VALUE))
         );
 
         tabbedPane.addTab("Input Criteria ", inputCriteriaForm);
@@ -1346,26 +1473,111 @@ public class DataCalculator extends javax.swing.JFrame {
         });
         jScrollPane4.setViewportView(officeDataTable);
 
+        towerGroupTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Sr.", "<html>Grouped Towers for UGR</html>"
+            }
+        ) {
+            Class[] types = new Class [] {
+                java.lang.Integer.class, java.lang.String.class
+            };
+
+            public Class getColumnClass(int columnIndex) {
+                return types [columnIndex];
+            }
+        });
+        towerGroupTable.getTableHeader().setResizingAllowed(false);
+        towerGroupTable.getTableHeader().setReorderingAllowed(false);
+        jScrollPane5.setViewportView(towerGroupTable);
+
+        groupTowers.setText("Group");
+        groupTowers.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                groupTowersActionPerformed(evt);
+            }
+        });
+
+        towerGroupScrollPane.setMaximumSize(new java.awt.Dimension(100, 400));
+
+        towerGroupPanel.setMaximumSize(new java.awt.Dimension(100, 400));
+        towerGroupPanel.setPreferredSize(new java.awt.Dimension(183, 400));
+
+        javax.swing.GroupLayout towerGroupPanelLayout = new javax.swing.GroupLayout(towerGroupPanel);
+        towerGroupPanel.setLayout(towerGroupPanelLayout);
+        towerGroupPanelLayout.setHorizontalGroup(
+            towerGroupPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 183, Short.MAX_VALUE)
+        );
+        towerGroupPanelLayout.setVerticalGroup(
+            towerGroupPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 400, Short.MAX_VALUE)
+        );
+
+        towerGroupScrollPane.setViewportView(towerGroupPanel);
+
+        clearGroupedTowerBtn.setText("Clear");
+        clearGroupedTowerBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                clearGroupedTowerBtnActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel8Layout = new javax.swing.GroupLayout(jPanel8);
+        jPanel8.setLayout(jPanel8Layout);
+        jPanel8Layout.setHorizontalGroup(
+            jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel8Layout.createSequentialGroup()
+                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel8Layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(groupTowers)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(clearGroupedTowerBtn))
+                    .addComponent(towerGroupScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+        );
+        jPanel8Layout.setVerticalGroup(
+            jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+            .addGroup(jPanel8Layout.createSequentialGroup()
+                .addComponent(towerGroupScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(groupTowers)
+                    .addComponent(clearGroupedTowerBtn))
+                .addContainerGap())
+        );
+
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
         mainPanelLayout.setHorizontalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addComponent(outsideAreaPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(154, 154, 154)
-                        .addComponent(inputDataNextBtn))
-                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addContainerGap()
                         .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(peopertTypeSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(28, 28, 28)
-                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(160, Short.MAX_VALUE))
+                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addComponent(outsideAreaPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jPanel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(peopertTypeSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(28, 28, 28)
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(0, 167, Short.MAX_VALUE))))
+                    .addGroup(mainPanelLayout.createSequentialGroup()
+                        .addGap(369, 369, 369)
+                        .addComponent(inputDataNextBtn)))
+                .addContainerGap())
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1382,26 +1594,23 @@ public class DataCalculator extends javax.swing.JFrame {
                         .addGap(37, 37, 37)
                         .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, mainPanelLayout.createSequentialGroup()
-                        .addComponent(outsideAreaPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(38, 38, 38))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, mainPanelLayout.createSequentialGroup()
-                        .addComponent(inputDataNextBtn)
-                        .addGap(60, 60, 60))))
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jPanel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(outsideAreaPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(inputDataNextBtn)
+                .addGap(10, 10, 10))
         );
 
         javax.swing.GroupLayout inputDataPanelLayout = new javax.swing.GroupLayout(inputDataPanel);
         inputDataPanel.setLayout(inputDataPanelLayout);
         inputDataPanelLayout.setHorizontalGroup(
             inputDataPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(mainPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         inputDataPanelLayout.setVerticalGroup(
             inputDataPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(inputDataPanelLayout.createSequentialGroup()
-                .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addContainerGap())
+            .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         tabbedPane.addTab("Input form", inputDataPanel);
@@ -1516,6 +1725,45 @@ public class DataCalculator extends javax.swing.JFrame {
             .addComponent(jScrollPane7, javax.swing.GroupLayout.DEFAULT_SIZE, 100, Short.MAX_VALUE)
         );
 
+        projectNameInput.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                projectNameInputActionPerformed(evt);
+            }
+        });
+
+        jLabel77.setText("Project Name");
+
+        jLabel78.setText("PDF Location");
+
+        javax.swing.GroupLayout jPanel9Layout = new javax.swing.GroupLayout(jPanel9);
+        jPanel9.setLayout(jPanel9Layout);
+        jPanel9Layout.setHorizontalGroup(
+            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel9Layout.createSequentialGroup()
+                .addGap(19, 19, 19)
+                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel78, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jLabel77, javax.swing.GroupLayout.DEFAULT_SIZE, 78, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(projectNameInput)
+                    .addComponent(pdfLocationInput, javax.swing.GroupLayout.DEFAULT_SIZE, 171, Short.MAX_VALUE))
+                .addContainerGap(125, Short.MAX_VALUE))
+        );
+        jPanel9Layout.setVerticalGroup(
+            jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel9Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(projectNameInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel77))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel78)
+                    .addComponent(pdfLocationInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout overviewPanelLayout = new javax.swing.GroupLayout(overviewPanel);
         overviewPanel.setLayout(overviewPanelLayout);
         overviewPanelLayout.setHorizontalGroup(
@@ -1526,24 +1774,23 @@ public class DataCalculator extends javax.swing.JFrame {
                     .addComponent(populationCriteriaPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(overviewPanelLayout.createSequentialGroup()
                         .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                .addComponent(waterDemandPDFBtn)
+                                .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jLabel67, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jLabel69)
+                                    .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addComponent(jLabel66, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel65)
                             .addComponent(waterDemandOverviewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(outdoorOverviewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(0, 484, Short.MAX_VALUE))
-                    .addGroup(overviewPanelLayout.createSequentialGroup()
-                        .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(waterDemandPDFBtn)
-                            .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                .addComponent(jLabel67, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addComponent(jLabel69)
-                                .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(overviewPanelLayout.createSequentialGroup()
                                 .addComponent(jLabel68)
-                                .addGap(0, 0, Short.MAX_VALUE)))))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                 .addContainerGap())
         );
         overviewPanelLayout.setVerticalGroup(
@@ -1567,10 +1814,12 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel69)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(outdoorOverviewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(outdoorOverviewPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(26, 26, 26)
                 .addComponent(waterDemandPDFBtn)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(24, Short.MAX_VALUE))
         );
 
         tabbedPane.addTab("Overview", overviewPanel);
@@ -1637,7 +1886,7 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE)
                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                .addContainerGap(257, Short.MAX_VALUE))
+                .addContainerGap(308, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout waterDemandTabLayout = new javax.swing.GroupLayout(waterDemandTab);
@@ -1945,7 +2194,7 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel33, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(waterDemandClubHouse, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(129, Short.MAX_VALUE))
+                .addContainerGap(180, Short.MAX_VALUE))
         );
 
         tabbedPane.addTab("tab5", waterDemandDetailPanel);
@@ -1958,8 +2207,8 @@ public class DataCalculator extends javax.swing.JFrame {
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 546, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 597, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
@@ -1973,9 +2222,7 @@ public class DataCalculator extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
@@ -1983,9 +2230,16 @@ public class DataCalculator extends javax.swing.JFrame {
 
     private void waterDemandPDFBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_waterDemandPDFBtnActionPerformed
         try {
-            PDFGenerator.generateWaterDemandPDF("D:\\Programming\\GUI\\NB\\PlumbIT\\pdf", 
+            if(projectNameInput.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Empty project name", "Error", JOptionPane.ERROR_MESSAGE);
+            } else if(pdfLocationInput.getText().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "Empty pdf location", "Error", JOptionPane.ERROR_MESSAGE);
+            } else {
+                PDFGenerator.generateWaterDemandPDF("D:\\Programming\\GUI\\NB\\PlumbIT\\pdf", 
                         standardValMap, towersList, officesList, outsideAreaMap, 
-                        swimmingPoolCapacity.getSelectedItem().toString(), landscapeAreaWater.getSelectedItem().toString());
+                        swimmingPoolCapacity.getSelectedItem().toString(), landscapeAreaWater.getSelectedItem().toString(), 
+                        groupedTowerNamesList, projectNameInput.getText(), pdfLocationInput.getText());
+            }
         } catch (FileNotFoundException ex) {
             ex.printStackTrace();
         }
@@ -2231,7 +2485,10 @@ public class DataCalculator extends javax.swing.JFrame {
             valid = false;
             errorMsg.append("Studio\n");
         }
-        
+        if(towerNameList.contains(towerName)) {
+            valid = false;
+            errorMsg.append("Tower Name already exists\n");
+        }
                 
         if(valid) {
             towersList.add(new TowerData(towerName, flatPerTower));
@@ -2247,6 +2504,8 @@ public class DataCalculator extends javax.swing.JFrame {
                 flatPerTower.get(StandardType.STUDIO),
                 "<html><div style='text-align:center; color:red'><b> X </b></div></html>"
             });
+            towerNameList.add(towerName);
+            addCheckBoxForTower(towerName);
         } else {
             flatPerTower.clear();
             JOptionPane.showMessageDialog(null, errorMsg.toString(), "Error",JOptionPane.ERROR_MESSAGE);
@@ -2258,9 +2517,12 @@ public class DataCalculator extends javax.swing.JFrame {
         int col = towerDataTable.columnAtPoint(evt.getPoint());
         if (row >= 0 && col == 9) {
             int dialogResult = JOptionPane.showConfirmDialog (null, "Are you sure, you want to delete Tower Data?","Warning", JOptionPane.YES_NO_OPTION);
-            if(dialogResult == JOptionPane.YES_OPTION){
+            if(dialogResult == JOptionPane.YES_OPTION) {
                 towersList.remove(row);
                 dtm.removeRow(row);
+                String towerName = towerNameList.get(row);
+                removeCheckBox(towerName);
+                towerNameList.remove(row);
             }
         }
     }//GEN-LAST:event_towerDataTableMouseClicked
@@ -2357,6 +2619,12 @@ public class DataCalculator extends javax.swing.JFrame {
             standardValMap.put(StandardType.RESIDUAL_HEAD_FIRE, getUpdatedStandardVal(StandardType.RESIDUAL_HEAD_FIRE, stdResidualHeadFire.getText()));
             standardValMap.put(StandardType.FRICTION_LOSS, getUpdatedStandardVal(StandardType.FRICTION_LOSS, stdFrictionLossInput.getText()));
             
+            standardValMap.put(StandardType.FLOW_TO_SEWER_DOM, getUpdatedStandardVal(StandardType.FLOW_TO_SEWER_DOM, domesticSewerPercent.getText()));
+            standardValMap.put(StandardType.FLOW_TO_SEWER_FLS, getUpdatedStandardVal(StandardType.FLOW_TO_SEWER_FLS, flushSewerPercent.getText()));
+            standardValMap.put(StandardType.RAW_WATER_TANK, getUpdatedStandardVal(StandardType.RAW_WATER_TANK, rawWaterTankPercent.getText()));
+            standardValMap.put(StandardType.DOMESTIC_TANK, getUpdatedStandardVal(StandardType.DOMESTIC_TANK, domesticWaterTankPercent.getText()));
+            standardValMap.put(StandardType.STP_FLUSHING_TANK, getUpdatedStandardVal(StandardType.STP_FLUSHING_TANK, stpFlushingTank.getText()));
+            
             standardValMap.keySet().forEach(key -> {
                 StandardValues std = standardValMap.get(key);
                 System.out.println(key + ":" +std.getValue());
@@ -2387,6 +2655,45 @@ public class DataCalculator extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_swimmingPoolCapacityActionPerformed
 
+    private void groupTowersActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_groupTowersActionPerformed
+        Component[] components = towerGroupPanel.getComponents();
+        List<String> groupedTowers = new ArrayList<>();
+        for(int i=0; i<components.length; i++) {
+            if(components[i] instanceof JCheckBox) {
+                JCheckBox checkbox = (JCheckBox)components[i];
+                System.out.println(components[i].getName() + " : " + checkbox.isSelected());
+                if(checkbox.isSelected() && checkbox.isEnabled()) {
+                    groupedTowers.add(checkbox.getName());
+                    checkbox.setEnabled(false);
+                }
+            }
+        }
+        if(!groupedTowers.isEmpty()) {
+            groupedTowerNamesList.add(groupedTowers);
+            DefaultTableModel model = (DefaultTableModel) towerGroupTable.getModel();
+            
+            model.addRow(new Object[]{
+                groupedTowerNamesList.size(),
+                String.join(",", groupedTowers)
+            });
+        }
+    }//GEN-LAST:event_groupTowersActionPerformed
+
+    private void clearGroupedTowerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearGroupedTowerBtnActionPerformed
+        groupedTowerNamesList.clear();
+        DefaultTableModel dtm = (DefaultTableModel)towerGroupTable.getModel();
+        int rowCnt = dtm.getRowCount();
+        for (int i = 0; i < rowCnt; i++) {
+            dtm.removeRow(i);
+        }
+        towerGroupTable.revalidate();
+        towerGroupTable.repaint();
+    }//GEN-LAST:event_clearGroupedTowerBtnActionPerformed
+
+    private void projectNameInputActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_projectNameInputActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_projectNameInputActionPerformed
+
     private void generateWaterDemandPDF() {
         
     }
@@ -2412,21 +2719,18 @@ public class DataCalculator extends javax.swing.JFrame {
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
         try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(DataCalculator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(DataCalculator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(DataCalculator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
+//                if ("Nimbus".equals(info.getName())) {
+//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
+//                    break;
+//                }
+//            }
+            UIManager.setLookAndFeel(new FlatLightLaf());
+        } catch (Exception ex) {
             java.util.logging.Logger.getLogger(DataCalculator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+        
         //</editor-fold>
 
         /* Create and display the form */
@@ -2440,8 +2744,13 @@ public class DataCalculator extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addOfficeDataBtn;
     private javax.swing.JButton addTowerBtn;
+    private javax.swing.JButton clearGroupedTowerBtn;
     private javax.swing.JTextField clubHouseAreaInput;
     private javax.swing.JPanel consumptionParamPanel;
+    private javax.swing.JTextField domesticSewerPercent;
+    private javax.swing.JTextField domesticWaterTankPercent;
+    private javax.swing.JTextField flushSewerPercent;
+    private javax.swing.JButton groupTowers;
     private javax.swing.JPanel inputCriteriaForm;
     private javax.swing.JButton inputCriteriaTabNextBtn;
     private javax.swing.JButton inputDataNextBtn;
@@ -2515,6 +2824,14 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel69;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel70;
+    private javax.swing.JLabel jLabel71;
+    private javax.swing.JLabel jLabel72;
+    private javax.swing.JLabel jLabel73;
+    private javax.swing.JLabel jLabel74;
+    private javax.swing.JLabel jLabel75;
+    private javax.swing.JLabel jLabel76;
+    private javax.swing.JLabel jLabel77;
+    private javax.swing.JLabel jLabel78;
     private javax.swing.JLabel jLabel8;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JLabel jLableStdFrictionLoss;
@@ -2524,10 +2841,14 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
+    private javax.swing.JPanel jPanel7;
+    private javax.swing.JPanel jPanel8;
+    private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
+    private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
     private javax.swing.JScrollPane jScrollPane7;
     private javax.swing.JTextField landscapeAreaInput;
@@ -2550,6 +2871,7 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JButton outsideAreaBtn;
     private javax.swing.JPanel outsideAreaPanel;
     private javax.swing.JPanel overviewPanel;
+    private javax.swing.JTextField pdfLocationInput;
     private javax.swing.JComboBox<String> peopertTypeSelector;
     private javax.swing.JTextField peopleDriverInput;
     private javax.swing.JTextField peoplePODsInput;
@@ -2569,6 +2891,8 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JLabel populationCriteriaLbl;
     private javax.swing.JPanel populationCriteriaPanel;
     private javax.swing.JTable populationCriteriaTbl;
+    private javax.swing.JTextField projectNameInput;
+    private javax.swing.JTextField rawWaterTankPercent;
     private javax.swing.JPanel residentialPanel;
     private javax.swing.JTextField stdBasementArea;
     private javax.swing.JTextField stdExtraAreaCatered;
@@ -2585,11 +2909,15 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JTextField stdTerrace;
     private javax.swing.JTextField stdTotalPlotArea;
     private javax.swing.JTextField stdwaterDemand;
+    private javax.swing.JTextField stpFlushingTank;
     private javax.swing.JTextField swimmingAreaInput;
     private javax.swing.JComboBox<String> swimmingPoolCapacity;
     private javax.swing.JTabbedPane tabbedPane;
     private javax.swing.JTable towerDataOveriewTable;
     private javax.swing.JTable towerDataTable;
+    private javax.swing.JPanel towerGroupPanel;
+    private javax.swing.JScrollPane towerGroupScrollPane;
+    private javax.swing.JTable towerGroupTable;
     private javax.swing.JTextField towerNameInput;
     private javax.swing.JPanel typePanel;
     private javax.swing.JTextField waterDemand2BHKInput;
@@ -2614,7 +2942,37 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JTable waterRequirementTbl;
     // End of variables declaration//GEN-END:variables
 
+    private void addCheckBoxForTower(String towerName) {
+        JCheckBox checkbox = new JCheckBox(towerName, false);
+        checkbox.setName(towerName);
+        checkbox.setMargin(new Insets(5,5,5,5));
+        towerGroupPanel.add(checkbox);
+        towerGroupPanel.revalidate();
+        towerGroupPanel.repaint();
+//        towerGroupScrollPane.revalidate();
+//        towerGroupScrollPane.repaint();
+    }
+    private void removeCheckBox(String towerName) {
+        Component componentByName = getComponentByName("checkBox"+towerName, towerGroupPanel);
+        if(componentByName != null) {
+            towerGroupPanel.remove(componentByName);
+            towerGroupPanel.revalidate();
+            towerGroupPanel.repaint();
+        }
+    }
 
+    public Component getComponentByName(String towerName, JComponent panel) {
+        HashMap componentMap = new HashMap<String,Component>();
+        Component[] components = panel.getComponents();
+        for (int i=0; i < components.length; i++) {
+            componentMap.put(components[i].getName(), components[i]);
+        }
+        if (componentMap.containsKey(towerName)) {
+                return (Component) componentMap.get(towerName);
+        }
+        else 
+            return null;
+    }
 
 
 

@@ -25,6 +25,15 @@ public class DataFormater {
         return "";
     }
     
+    public static int getNormalizedStandardValue(StandardValues standardVal){
+        if(standardVal != null){
+            double value = standardVal.getValue();
+                return (int)value;
+        }
+        return 0;
+    }
+
+    
     public static String getFlushWaterRequirement(StandardValues standardVal){
         if(standardVal != null){
             double value = standardVal.getValue() * 1/3;

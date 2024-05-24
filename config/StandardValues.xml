@@ -231,4 +231,44 @@
       <description>%</description>
     </com.pc.plumbit.model.StandardValues>
   </entry>
+  <entry>
+    <com.pc.plumbit.enums.StandardType>FLOW_TO_SEWER_DOM</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.model.StandardValues>
+      <value>90</value>
+      <round>true</round>
+      <description>%</description>
+    </com.pc.plumbit.model.StandardValues>
+  </entry>
+  <entry>
+    <com.pc.plumbit.enums.StandardType>FLOW_TO_SEWER_FLS</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.model.StandardValues>
+      <value>100</value>
+      <round>true</round>
+      <description>%</description>
+    </com.pc.plumbit.model.StandardValues>
+  </entry>
+  <entry>
+    <com.pc.plumbit.enums.StandardType>RAW_WATER_TANK</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.model.StandardValues>
+      <value>50</value>
+      <round>true</round>
+      <description>%</description>
+    </com.pc.plumbit.model.StandardValues>
+  </entry>
+  <entry>
+    <com.pc.plumbit.enums.StandardType>DOMESTIC_TANK</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.model.StandardValues>
+      <value>50</value>
+      <round>true</round>
+      <description>%</description>
+    </com.pc.plumbit.model.StandardValues>
+  </entry>
+  <entry>
+    <com.pc.plumbit.enums.StandardType>STP_FLUSHING_TANK</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.model.StandardValues>
+      <value>1</value>
+      <round>true</round>
+      <description>in days</description>
+    </com.pc.plumbit.model.StandardValues>
+  </entry>
 </map>
