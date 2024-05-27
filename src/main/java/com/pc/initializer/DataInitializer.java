@@ -129,7 +129,7 @@ public class DataInitializer {
         }
     }
     
-    public static void setTableStyling(JTable tbl){
+    public static void setTableStyling(JTable tbl) {
         tbl.getTableHeader().setOpaque(false);
         tbl.getTableHeader().setForeground(Color.BLUE);
         tbl.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);

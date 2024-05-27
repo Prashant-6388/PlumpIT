@@ -9,9 +9,12 @@ import com.pc.plumbit.enums.StandardType;
 import com.pc.exceptions.InvalidInputException;
 import com.pc.initializer.DataInitializer;
 import com.pc.plumbit.generator.PDFGenerator;
+import com.pc.plumbit.model.PdfData;
 import com.pc.plumbit.model.StandardValues;
 import com.pc.plumbit.model.TowerData;
 import com.pc.utils.DataFormater;
+import com.pc.utils.StyleFormatter;
+import com.thoughtworks.xstream.io.StreamException;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridLayout;
@@ -40,7 +43,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DataCalculator extends javax.swing.JFrame {
 
-    Logger log = LoggerFactory.getLogger(DataCalculator.class);
+    private static final Logger log = LoggerFactory.getLogger(DataCalculator.class);
     private List<TowerData> towersList = new ArrayList<>();
     private List<TreeMap<StandardType,Integer>> officesList = new ArrayList<>();
     private TreeMap<StandardType,Integer> outsideAreaMap = new TreeMap<>();
@@ -67,7 +70,6 @@ public class DataCalculator extends javax.swing.JFrame {
         initOfficeTable();
         officePanel.setVisible(false);
         residentialPanel.setVisible(true);
-        waterDemandDetailPanel.setVisible(false);
         tabbedPane.setEnabledAt(1, false);
         tabbedPane.setEnabledAt(2, false);
         
@@ -87,10 +89,6 @@ public class DataCalculator extends javax.swing.JFrame {
         dtmTowerDataOverview.addColumn("<html><b>Studio</b></html>");
         towerDataOveriewTable.setModel(dtmTowerDataOverview);
         
-        /*dtmGroupedTowerTable.addColumn("Nr");
-        dtmGroupedTowerTable.addColumn("Grouped Towers");
-        towerGroupTable.setModel(dtmGroupedTowerTable);*/
-        
         peopertTypeSelector.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 JComboBox cb = (JComboBox) e.getSource();
@@ -108,6 +106,10 @@ public class DataCalculator extends javax.swing.JFrame {
         
         towerGroupPanel.setLayout(new GridLayout(20,1));
         DataInitializer.setTableStyling(towerGroupTable);
+        
+        StyleFormatter.setTableColumnAlignment(towerDataTable, JLabel.CENTER, true);
+        StyleFormatter.setTableColumnAlignment(officeDataTable, JLabel.CENTER, true);
+        StyleFormatter.setTableColumnAlignment(towerGroupTable, JLabel.CENTER, true);
     }
     
     private void initTowerTable() {
@@ -140,15 +142,27 @@ public class DataCalculator extends javax.swing.JFrame {
         
     }
     private void initConfigs() {
-//        DataInitializer.setupConfigData(populationCriteriaTbl, waterRequirementTbl);
         updateStandardFieldEditiability(false);
         readAndSetStandardValues();
-        
     }
     
     private void readAndSetStandardValues() {
-        standardValMap = DataInitializer.getStandardValues();
-        setStandardValues(standardValMap);
+        try {
+            standardValMap = DataInitializer.getStandardValues();
+            setStandardValues(standardValMap);
+        } catch (StreamException ex) {
+            log.error("unable to read standard value config : ", ex);
+            int continueWithoutStandardVals = JOptionPane.showConfirmDialog(this, "Unable to read Standard values \n Do you want to continue?", 
+                    "Error", JOptionPane.YES_NO_OPTION);
+            System.out.println("continueWithoutStandardVals : "+continueWithoutStandardVals);
+            if (continueWithoutStandardVals == 0) {
+                updateStandardFieldEditiability(true);
+            } else {
+                JOptionPane.showMessageDialog(this, "Application will close now, please contact support team");
+                this.dispose();
+                System.exit(0);
+            }
+        }
     }
     
     private void setStandardValues(HashMap<StandardType, StandardValues> standardValues){
@@ -191,6 +205,11 @@ public class DataCalculator extends javax.swing.JFrame {
         domesticWaterTankPercent.setText(DataFormater.getStandardValue(standardValues.get(StandardType.DOMESTIC_TANK)));
         stpFlushingTank.setText(DataFormater.getStandardValue(standardValues.get(StandardType.STP_FLUSHING_TANK)));
         
+        ohtFireFightingTank.setText(DataFormater.getStandardValue(standardValues.get(StandardType.OHT_FIRE_FIGHTING_TANK)));
+        ugrFireFightingTank.setText(DataFormater.getStandardValue(standardValues.get(StandardType.UGR_FIRE_FIGHTING_TANK)));
+        
+        swimmingPoolCapacity.setSelectedItem("5");
+        
     }
     
     private void updateStandardFieldEditiability(boolean allowEdit){
@@ -232,6 +251,9 @@ public class DataCalculator extends javax.swing.JFrame {
         rawWaterTankPercent.setEditable(allowEdit);
         domesticWaterTankPercent.setEditable(allowEdit);
         stpFlushingTank.setEditable(allowEdit);
+        
+        ugrFireFightingTank.setEditable(allowEdit);
+        ohtFireFightingTank.setEditable(allowEdit);
     }
     
     /**
@@ -326,6 +348,10 @@ public class DataCalculator extends javax.swing.JFrame {
         domesticWaterTankPercent = new javax.swing.JTextField();
         jLabel76 = new javax.swing.JLabel();
         stpFlushingTank = new javax.swing.JTextField();
+        jLabel79 = new javax.swing.JLabel();
+        ugrFireFightingTank = new javax.swing.JTextField();
+        jLabel80 = new javax.swing.JLabel();
+        ohtFireFightingTank = new javax.swing.JTextField();
         inputDataPanel = new javax.swing.JPanel();
         mainPanel = new javax.swing.JPanel();
         peopertTypeSelector = new javax.swing.JComboBox<>();
@@ -403,47 +429,10 @@ public class DataCalculator extends javax.swing.JFrame {
         jLabel77 = new javax.swing.JLabel();
         jLabel78 = new javax.swing.JLabel();
         pdfLocationInput = new javax.swing.JTextField();
-        waterDemandTab = new javax.swing.JPanel();
-        jPanel4 = new javax.swing.JPanel();
-        jScrollPane2 = new javax.swing.JScrollPane();
-        populationCriteriaTbl = new javax.swing.JTable();
-        jScrollPane3 = new javax.swing.JScrollPane();
-        waterRequirementTbl = new javax.swing.JTable();
-        populationCriteriaLbl = new javax.swing.JLabel();
-        waterRequirementLbl = new javax.swing.JLabel();
-        waterDemandDetailPanel = new javax.swing.JPanel();
-        jLabel35 = new javax.swing.JLabel();
-        jLabel30 = new javax.swing.JLabel();
-        jLabel34 = new javax.swing.JLabel();
-        jLabel36 = new javax.swing.JLabel();
-        jLabel26 = new javax.swing.JLabel();
-        jLabel38 = new javax.swing.JLabel();
-        jLabel39 = new javax.swing.JLabel();
-        jLabel25 = new javax.swing.JLabel();
-        jLabel27 = new javax.swing.JLabel();
-        jLabel28 = new javax.swing.JLabel();
-        jLabel29 = new javax.swing.JLabel();
-        jLabel31 = new javax.swing.JLabel();
-        jLabel32 = new javax.swing.JLabel();
-        jLabel33 = new javax.swing.JLabel();
-        waterDemandClubHouse = new javax.swing.JTextField();
-        waterDemandSwimmingPool = new javax.swing.JTextField();
-        waterDemandLandscape = new javax.swing.JTextField();
-        waterDemandDriver = new javax.swing.JTextField();
-        waterDemandServant = new javax.swing.JTextField();
-        waterDemandPODs = new javax.swing.JTextField();
-        waterDemandStudioInput = new javax.swing.JTextField();
-        waterDemand4AndHalfBHKInput = new javax.swing.JTextField();
-        waterDemand4BHKInput = new javax.swing.JTextField();
-        waterDemand3AndHalfBHKInput = new javax.swing.JTextField();
-        waterDemand3BHKInput = new javax.swing.JTextField();
-        waterDemand2NHalfBHKInput = new javax.swing.JTextField();
-        waterDemand2BHKInput = new javax.swing.JTextField();
-        waterDemandOneBHKInput = new javax.swing.JTextField();
-        jLabel37 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
+        setResizable(false);
 
         peoplePerTypeInputPanel.setMaximumSize(new java.awt.Dimension(20, 40));
         peoplePerTypeInputPanel.setMinimumSize(new java.awt.Dimension(20, 40));
@@ -831,6 +820,7 @@ public class DataCalculator extends javax.swing.JFrame {
         );
 
         inputCriteriaTabNextBtn.setText("Next");
+        inputCriteriaTabNextBtn.setAlignmentX(0.5F);
         inputCriteriaTabNextBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 inputCriteriaTabNextBtnActionPerformed(evt);
@@ -956,6 +946,10 @@ public class DataCalculator extends javax.swing.JFrame {
 
         jLabel76.setText("FLUSHING TANK (days)");
 
+        jLabel79.setText("UGR FIRE FIGHTING TANK");
+
+        jLabel80.setText("OHT FIRE FIGHTING TANK");
+
         javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
         jPanel7.setLayout(jPanel7Layout);
         jPanel7Layout.setHorizontalGroup(
@@ -963,23 +957,36 @@ public class DataCalculator extends javax.swing.JFrame {
             .addGroup(jPanel7Layout.createSequentialGroup()
                 .addGap(77, 77, 77)
                 .addComponent(jLabel71, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(48, Short.MAX_VALUE))
             .addGroup(jPanel7Layout.createSequentialGroup()
                 .addGap(23, 23, 23)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel76, javax.swing.GroupLayout.DEFAULT_SIZE, 147, Short.MAX_VALUE)
-                    .addComponent(jLabel72, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel73, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel75, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel74, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(domesticSewerPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(flushSewerPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(rawWaterTankPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(domesticWaterTankPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(stpFlushingTank, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(19, 19, 19))
+                    .addGroup(jPanel7Layout.createSequentialGroup()
+                        .addComponent(jLabel80, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(ohtFireFightingTank, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel7Layout.createSequentialGroup()
+                        .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(jPanel7Layout.createSequentialGroup()
+                                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(jLabel76, javax.swing.GroupLayout.DEFAULT_SIZE, 147, Short.MAX_VALUE)
+                                    .addComponent(jLabel72, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jLabel73, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jLabel75, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jLabel74, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(domesticSewerPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(flushSewerPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(rawWaterTankPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(domesticWaterTankPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(stpFlushingTank, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                            .addGroup(jPanel7Layout.createSequentialGroup()
+                                .addComponent(jLabel79, javax.swing.GroupLayout.DEFAULT_SIZE, 176, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(ugrFireFightingTank, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(19, 19, 19))))
         );
         jPanel7Layout.setVerticalGroup(
             jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1008,7 +1015,15 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel76, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(stpFlushingTank))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel79, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ugrFireFightingTank))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel80, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ohtFireFightingTank))
+                .addContainerGap())
         );
 
         javax.swing.GroupLayout inputCriteriaFormLayout = new javax.swing.GroupLayout(inputCriteriaForm);
@@ -1031,9 +1046,9 @@ public class DataCalculator extends javax.swing.JFrame {
                             .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 312, Short.MAX_VALUE)
                             .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                     .addGroup(inputCriteriaFormLayout.createSequentialGroup()
-                        .addGap(241, 241, 241)
+                        .addGap(369, 369, 369)
                         .addComponent(inputCriteriaTabNextBtn)))
-                .addContainerGap(30, Short.MAX_VALUE))
+                .addContainerGap(43, Short.MAX_VALUE))
         );
         inputCriteriaFormLayout.setVerticalGroup(
             inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1048,12 +1063,12 @@ public class DataCalculator extends javax.swing.JFrame {
                             .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(consumptionParamPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-                .addGap(3, 3, 3)
+                        .addGroup(inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 81, Short.MAX_VALUE)
                 .addComponent(inputCriteriaTabNextBtn)
-                .addContainerGap(102, Short.MAX_VALUE))
+                .addGap(10, 10, 10))
         );
 
         tabbedPane.addTab("Input Criteria ", inputCriteriaForm);
@@ -1102,31 +1117,27 @@ public class DataCalculator extends javax.swing.JFrame {
         outsideAreaPanelLayout.setHorizontalGroup(
             outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(outsideAreaPanelLayout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(outsideAreaPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel8)
-                            .addComponent(jLabel7)
-                            .addComponent(jLabel9))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(swimmingAreaInput, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
-                            .addComponent(landscapeAreaInput, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(clubHouseAreaInput, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(landscapeAreaWater, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(swimmingPoolCapacity, 0, 1, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel53, javax.swing.GroupLayout.DEFAULT_SIZE, 170, Short.MAX_VALUE)
-                            .addComponent(jLabel70)))
-                    .addGroup(outsideAreaPanelLayout.createSequentialGroup()
-                        .addGap(39, 39, 39)
-                        .addComponent(outsideAreaBtn)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addGap(6, 6, 6))
+                    .addComponent(jLabel8)
+                    .addComponent(jLabel7)
+                    .addComponent(jLabel9))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(swimmingAreaInput, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
+                    .addComponent(landscapeAreaInput, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(clubHouseAreaInput, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(landscapeAreaWater, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(swimmingPoolCapacity, 0, 1, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(jLabel53, javax.swing.GroupLayout.DEFAULT_SIZE, 146, Short.MAX_VALUE)
+                    .addComponent(jLabel70)))
+            .addGroup(outsideAreaPanelLayout.createSequentialGroup()
+                .addGap(39, 39, 39)
+                .addComponent(outsideAreaBtn))
         );
         outsideAreaPanelLayout.setVerticalGroup(
             outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1473,20 +1484,28 @@ public class DataCalculator extends javax.swing.JFrame {
         });
         jScrollPane4.setViewportView(officeDataTable);
 
+        towerGroupTable.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         towerGroupTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Sr.", "<html>Grouped Towers for UGR</html>"
+                "Sr.", "<html>Grouped Towers</html>"
             }
         ) {
             Class[] types = new Class [] {
                 java.lang.Integer.class, java.lang.String.class
             };
+            boolean[] canEdit = new boolean [] {
+                false, false
+            };
 
             public Class getColumnClass(int columnIndex) {
                 return types [columnIndex];
+            }
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
             }
         });
         towerGroupTable.getTableHeader().setResizingAllowed(false);
@@ -1569,11 +1588,11 @@ public class DataCalculator extends javax.swing.JFrame {
                                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(peopertTypeSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(28, 28, 28)
-                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                    .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(0, 167, Short.MAX_VALUE))))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 59, Short.MAX_VALUE)
+                                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 576, Short.MAX_VALUE)
+                                    .addComponent(jScrollPane4))
+                                .addGap(12, 12, 12))))
                     .addGroup(mainPanelLayout.createSequentialGroup()
                         .addGap(369, 369, 369)
                         .addComponent(inputDataNextBtn)))
@@ -1582,18 +1601,16 @@ public class DataCalculator extends javax.swing.JFrame {
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
-                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addContainerGap()
+                .addComponent(peopertTypeSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(peopertTypeSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addGap(44, 44, 44)
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(37, 37, 37)
-                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 48, Short.MAX_VALUE)
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(outsideAreaPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -1773,17 +1790,16 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(populationCriteriaPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(overviewPanelLayout.createSequentialGroup()
-                        .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                .addComponent(waterDemandPDFBtn)
-                                .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel67, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel69)
-                                    .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addComponent(jLabel66, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel65)
-                            .addComponent(waterDemandOverviewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(outdoorOverviewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(waterDemandPDFBtn)
+                            .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addComponent(jLabel67, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel69)
+                                .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel66, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel65)
+                                .addComponent(waterDemandOverviewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(outdoorOverviewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
@@ -1817,387 +1833,12 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(outdoorOverviewPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(26, 26, 26)
-                .addComponent(waterDemandPDFBtn)
-                .addContainerGap(24, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
+                .addComponent(waterDemandPDFBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(11, 11, 11))
         );
 
         tabbedPane.addTab("Overview", overviewPanel);
-
-        populationCriteriaTbl.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        jScrollPane2.setViewportView(populationCriteriaTbl);
-
-        waterRequirementTbl.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
-            },
-            new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
-            }
-        ));
-        jScrollPane3.setViewportView(waterRequirementTbl);
-
-        populationCriteriaLbl.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        populationCriteriaLbl.setForeground(new java.awt.Color(0, 0, 255));
-        populationCriteriaLbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        populationCriteriaLbl.setText("Population criteria");
-
-        waterRequirementLbl.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        waterRequirementLbl.setForeground(new java.awt.Color(0, 0, 255));
-        waterRequirementLbl.setHorizontalAlignment(javax.swing.SwingConstants.CENTER);
-        waterRequirementLbl.setText("Water Requirement");
-
-        javax.swing.GroupLayout jPanel4Layout = new javax.swing.GroupLayout(jPanel4);
-        jPanel4.setLayout(jPanel4Layout);
-        jPanel4Layout.setHorizontalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(populationCriteriaLbl, javax.swing.GroupLayout.DEFAULT_SIZE, 327, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addComponent(waterRequirementLbl, javax.swing.GroupLayout.DEFAULT_SIZE, 316, Short.MAX_VALUE))
-                .addContainerGap(196, Short.MAX_VALUE))
-        );
-        jPanel4Layout.setVerticalGroup(
-            jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(populationCriteriaLbl)
-                    .addComponent(waterRequirementLbl))
-                .addGap(4, 4, 4)
-                .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jScrollPane3, javax.swing.GroupLayout.DEFAULT_SIZE, 228, Short.MAX_VALUE)
-                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
-                .addContainerGap(308, Short.MAX_VALUE))
-        );
-
-        javax.swing.GroupLayout waterDemandTabLayout = new javax.swing.GroupLayout(waterDemandTab);
-        waterDemandTab.setLayout(waterDemandTabLayout);
-        waterDemandTabLayout.setHorizontalGroup(
-            waterDemandTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-        waterDemandTabLayout.setVerticalGroup(
-            waterDemandTabLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-        );
-
-        tabbedPane.addTab("Water Demand", waterDemandTab);
-
-        waterDemandDetailPanel.setBackground(new java.awt.Color(204, 204, 204));
-        waterDemandDetailPanel.setForeground(new java.awt.Color(204, 204, 204));
-        waterDemandDetailPanel.setEnabled(false);
-        waterDemandDetailPanel.setOpaque(false);
-
-        jLabel35.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        jLabel35.setText("<html><b>1 BHK</b> : val</html>");
-        jLabel35.setAlignmentX(0.5F);
-        jLabel35.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel35.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel35.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel30.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        jLabel30.setText("2 BHK");
-        jLabel30.setAlignmentX(0.5F);
-        jLabel30.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel30.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel30.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel34.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        jLabel34.setText("2.5 BHK");
-        jLabel34.setAlignmentX(0.5F);
-        jLabel34.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel34.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel34.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel36.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        jLabel36.setText("3 BHK");
-        jLabel36.setAlignmentX(0.5F);
-        jLabel36.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        jLabel36.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel36.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel36.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel26.setText("3.5 BHK");
-        jLabel26.setAlignmentX(0.5F);
-        jLabel26.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        jLabel26.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel26.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel26.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel38.setText("4 BHK");
-        jLabel38.setAlignmentX(0.5F);
-        jLabel38.setHorizontalTextPosition(javax.swing.SwingConstants.LEFT);
-        jLabel38.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel38.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel38.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel39.setText("4.5 BHK");
-        jLabel39.setAlignmentX(0.5F);
-        jLabel39.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel39.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel39.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel25.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
-        jLabel25.setText("Studio");
-        jLabel25.setAlignmentX(0.5F);
-        jLabel25.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel25.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel25.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel27.setText("PODS");
-        jLabel27.setAlignmentX(0.5F);
-        jLabel27.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel27.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel27.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel28.setText("SERVANT");
-        jLabel28.setAlignmentX(0.5F);
-        jLabel28.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel28.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel28.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel29.setText("DRIVER");
-        jLabel29.setAlignmentX(0.5F);
-        jLabel29.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel29.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel29.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel31.setText("Landscape");
-        jLabel31.setAlignmentX(0.5F);
-        jLabel31.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel31.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel31.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel32.setText("Swimming Pool");
-        jLabel32.setAlignmentX(0.5F);
-        jLabel32.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel32.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel32.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel33.setText("Club House");
-        jLabel33.setAlignmentX(0.5F);
-        jLabel33.setMaximumSize(new java.awt.Dimension(20, 40));
-        jLabel33.setMinimumSize(new java.awt.Dimension(20, 40));
-        jLabel33.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemandClubHouse.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemandClubHouse.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemandClubHouse.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemandSwimmingPool.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemandSwimmingPool.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemandSwimmingPool.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemandLandscape.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemandLandscape.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemandLandscape.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemandDriver.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemandDriver.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemandDriver.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemandServant.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemandServant.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemandServant.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemandPODs.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemandPODs.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemandPODs.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemandStudioInput.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemandStudioInput.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemandStudioInput.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemand4AndHalfBHKInput.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemand4AndHalfBHKInput.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemand4AndHalfBHKInput.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemand4BHKInput.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemand4BHKInput.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemand4BHKInput.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemand3AndHalfBHKInput.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemand3AndHalfBHKInput.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemand3AndHalfBHKInput.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemand3BHKInput.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemand3BHKInput.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemand3BHKInput.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemand2NHalfBHKInput.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemand2NHalfBHKInput.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemand2NHalfBHKInput.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemand2BHKInput.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemand2BHKInput.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemand2BHKInput.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        waterDemandOneBHKInput.setMaximumSize(new java.awt.Dimension(20, 40));
-        waterDemandOneBHKInput.setMinimumSize(new java.awt.Dimension(20, 40));
-        waterDemandOneBHKInput.setPreferredSize(new java.awt.Dimension(20, 80));
-
-        jLabel37.setBackground(new java.awt.Color(204, 255, 255));
-        jLabel37.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jLabel37.setForeground(new java.awt.Color(0, 0, 255));
-        jLabel37.setText("Water Demand");
-
-        javax.swing.GroupLayout waterDemandDetailPanelLayout = new javax.swing.GroupLayout(waterDemandDetailPanel);
-        waterDemandDetailPanel.setLayout(waterDemandDetailPanelLayout);
-        waterDemandDetailPanelLayout.setHorizontalGroup(
-            waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                .addComponent(jLabel35, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(20, 20, 20)
-                                .addComponent(waterDemandOneBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                .addComponent(jLabel30, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(20, 20, 20)
-                                .addComponent(waterDemand2BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                .addComponent(jLabel34, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(20, 20, 20)
-                                .addComponent(waterDemand2NHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                .addComponent(jLabel36, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(20, 20, 20)
-                                .addComponent(waterDemand3BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                .addComponent(jLabel26, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(20, 20, 20)
-                                .addComponent(waterDemand3AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                .addComponent(jLabel38, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(21, 21, 21)
-                                .addComponent(waterDemand4BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                .addGap(2, 2, 2)
-                                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                        .addComponent(jLabel39, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(waterDemand4AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                        .addComponent(jLabel25, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(waterDemandStudioInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                        .addComponent(jLabel27, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(waterDemandPODs, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                        .addComponent(jLabel28, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(waterDemandServant, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                        .addComponent(jLabel29, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(waterDemandDriver, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                        .addComponent(jLabel31, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(waterDemandLandscape, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                        .addComponent(jLabel32, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(waterDemandSwimmingPool, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                    .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                                        .addComponent(jLabel33, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(18, 18, 18)
-                                        .addComponent(waterDemandClubHouse, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))))))
-                    .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                        .addGap(48, 48, 48)
-                        .addComponent(jLabel37)))
-                .addContainerGap(670, Short.MAX_VALUE))
-        );
-        waterDemandDetailPanelLayout.setVerticalGroup(
-            waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(waterDemandDetailPanelLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel37)
-                .addGap(5, 5, 5)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel35, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemandOneBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(5, 5, 5)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel30, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemand2BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(5, 5, 5)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel34, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemand2NHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel36, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemand3BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel26, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemand3AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel38, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemand4BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(5, 5, 5)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel39, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemand4AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel25, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemandStudioInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel27, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemandPODs, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel28, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemandServant, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel29, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemandDriver, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel31, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemandLandscape, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel32, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemandSwimmingPool, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(waterDemandDetailPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel33, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(waterDemandClubHouse, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(180, Short.MAX_VALUE))
-        );
-
-        tabbedPane.addTab("tab5", waterDemandDetailPanel);
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -2216,9 +1857,7 @@ public class DataCalculator extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -2231,17 +1870,23 @@ public class DataCalculator extends javax.swing.JFrame {
     private void waterDemandPDFBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_waterDemandPDFBtnActionPerformed
         try {
             if(projectNameInput.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Empty project name", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Empty project name", "Error", JOptionPane.ERROR_MESSAGE);
             } else if(pdfLocationInput.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(null, "Empty pdf location", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Empty pdf location", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
-                PDFGenerator.generateWaterDemandPDF("D:\\Programming\\GUI\\NB\\PlumbIT\\pdf", 
-                        standardValMap, towersList, officesList, outsideAreaMap, 
-                        swimmingPoolCapacity.getSelectedItem().toString(), landscapeAreaWater.getSelectedItem().toString(), 
-                        groupedTowerNamesList, projectNameInput.getText(), pdfLocationInput.getText());
+                PdfData.PdfDataBuilder builder = new PdfData.PdfDataBuilder(standardValMap, towersList);
+                builder.setOfficesList(officesList)
+                        .setOutsideAreaMap(outsideAreaMap)
+                        .setLandscapeAreaPercent(landscapeAreaWater.getSelectedItem().toString())
+                        .setSwimmingPoolCapacityPercent(swimmingPoolCapacity.getSelectedItem().toString())
+                        .setGroupedTowerNamesList(groupedTowerNamesList)
+                        .setProjectName(projectNameInput.getText())
+                        .setPdfLocation(pdfLocationInput.getText());
+                
+                PDFGenerator.generateWaterDemandPDF(builder.build(), this);
             }
         } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
+            log.error("Error file reading", ex);
         }
     }//GEN-LAST:event_waterDemandPDFBtnActionPerformed
 
@@ -2299,7 +1944,7 @@ public class DataCalculator extends javax.swing.JFrame {
             tabbedPane.setEnabledAt(2, true);
             tabbedPane.setSelectedIndex(2);
         } else {
-            JOptionPane.showMessageDialog(null, "No Data provided?", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "No Data provided?", "Error", JOptionPane.ERROR_MESSAGE);
         }
         createOverview();
     }//GEN-LAST:event_inputDataNextBtnActionPerformed
@@ -2508,7 +2153,7 @@ public class DataCalculator extends javax.swing.JFrame {
             addCheckBoxForTower(towerName);
         } else {
             flatPerTower.clear();
-            JOptionPane.showMessageDialog(null, errorMsg.toString(), "Error",JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, errorMsg.toString(), "Error",JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_addTowerBtnActionPerformed
 
@@ -2516,7 +2161,7 @@ public class DataCalculator extends javax.swing.JFrame {
         int row = towerDataTable.rowAtPoint(evt.getPoint());
         int col = towerDataTable.columnAtPoint(evt.getPoint());
         if (row >= 0 && col == 9) {
-            int dialogResult = JOptionPane.showConfirmDialog (null, "Are you sure, you want to delete Tower Data?","Warning", JOptionPane.YES_NO_OPTION);
+            int dialogResult = JOptionPane.showConfirmDialog (this, "Are you sure, you want to delete Tower Data?","Warning", JOptionPane.YES_NO_OPTION);
             if(dialogResult == JOptionPane.YES_OPTION) {
                 towersList.remove(row);
                 dtm.removeRow(row);
@@ -2559,7 +2204,7 @@ public class DataCalculator extends javax.swing.JFrame {
             });
         } else {
             commertials.clear();
-            JOptionPane.showMessageDialog(null, errorMsg.toString(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, errorMsg.toString(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_addOfficeDataBtnActionPerformed
 
@@ -2567,7 +2212,7 @@ public class DataCalculator extends javax.swing.JFrame {
         int row = officeDataTable.rowAtPoint(evt.getPoint());
         int col = officeDataTable.columnAtPoint(evt.getPoint());
         if (row >= 0 && col == 2) {
-            int dialogResult = JOptionPane.showConfirmDialog (null, "Are you sure, you want to delete Office Data?","Warning", JOptionPane.YES_NO_OPTION);
+            int dialogResult = JOptionPane.showConfirmDialog (this, "Are you sure, you want to delete Office Data?","Warning", JOptionPane.YES_NO_OPTION);
             if(dialogResult == JOptionPane.YES_OPTION){
                 officesList.remove(row);
                 dtmOffice.removeRow(row);
@@ -2632,7 +2277,7 @@ public class DataCalculator extends javax.swing.JFrame {
             tabbedPane.setEnabledAt(1, true);
             tabbedPane.setSelectedIndex(1);
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(null, "Error : "+ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Error : "+ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -2661,7 +2306,6 @@ public class DataCalculator extends javax.swing.JFrame {
         for(int i=0; i<components.length; i++) {
             if(components[i] instanceof JCheckBox) {
                 JCheckBox checkbox = (JCheckBox)components[i];
-                System.out.println(components[i].getName() + " : " + checkbox.isSelected());
                 if(checkbox.isSelected() && checkbox.isEnabled()) {
                     groupedTowers.add(checkbox.getName());
                     checkbox.setEnabled(false);
@@ -2680,6 +2324,7 @@ public class DataCalculator extends javax.swing.JFrame {
     }//GEN-LAST:event_groupTowersActionPerformed
 
     private void clearGroupedTowerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearGroupedTowerBtnActionPerformed
+        unCheckGroupedTowers();
         groupedTowerNamesList.clear();
         DefaultTableModel dtm = (DefaultTableModel)towerGroupTable.getModel();
         int rowCnt = dtm.getRowCount();
@@ -2773,22 +2418,7 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel24;
-    private javax.swing.JLabel jLabel25;
-    private javax.swing.JLabel jLabel26;
-    private javax.swing.JLabel jLabel27;
-    private javax.swing.JLabel jLabel28;
-    private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel30;
-    private javax.swing.JLabel jLabel31;
-    private javax.swing.JLabel jLabel32;
-    private javax.swing.JLabel jLabel33;
-    private javax.swing.JLabel jLabel34;
-    private javax.swing.JLabel jLabel35;
-    private javax.swing.JLabel jLabel36;
-    private javax.swing.JLabel jLabel37;
-    private javax.swing.JLabel jLabel38;
-    private javax.swing.JLabel jLabel39;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel40;
     private javax.swing.JLabel jLabel41;
@@ -2832,21 +2462,20 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel76;
     private javax.swing.JLabel jLabel77;
     private javax.swing.JLabel jLabel78;
+    private javax.swing.JLabel jLabel79;
     private javax.swing.JLabel jLabel8;
+    private javax.swing.JLabel jLabel80;
     private javax.swing.JLabel jLabel9;
     private javax.swing.JLabel jLableStdFrictionLoss;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
-    private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
     private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JScrollPane jScrollPane3;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
@@ -2867,6 +2496,7 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JTable officeDataOverviewTable;
     private javax.swing.JTable officeDataTable;
     private javax.swing.JPanel officePanel;
+    private javax.swing.JTextField ohtFireFightingTank;
     private javax.swing.JPanel outdoorOverviewPanel;
     private javax.swing.JButton outsideAreaBtn;
     private javax.swing.JPanel outsideAreaPanel;
@@ -2888,9 +2518,7 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JTextField peoplePerSwimmingPoolInput;
     private javax.swing.JPanel peoplePerTypeInputPanel;
     private javax.swing.JTextField peopleServantInput;
-    private javax.swing.JLabel populationCriteriaLbl;
     private javax.swing.JPanel populationCriteriaPanel;
-    private javax.swing.JTable populationCriteriaTbl;
     private javax.swing.JTextField projectNameInput;
     private javax.swing.JTextField rawWaterTankPercent;
     private javax.swing.JPanel residentialPanel;
@@ -2920,26 +2548,9 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JTable towerGroupTable;
     private javax.swing.JTextField towerNameInput;
     private javax.swing.JPanel typePanel;
-    private javax.swing.JTextField waterDemand2BHKInput;
-    private javax.swing.JTextField waterDemand2NHalfBHKInput;
-    private javax.swing.JTextField waterDemand3AndHalfBHKInput;
-    private javax.swing.JTextField waterDemand3BHKInput;
-    private javax.swing.JTextField waterDemand4AndHalfBHKInput;
-    private javax.swing.JTextField waterDemand4BHKInput;
-    private javax.swing.JTextField waterDemandClubHouse;
-    private javax.swing.JPanel waterDemandDetailPanel;
-    private javax.swing.JTextField waterDemandDriver;
-    private javax.swing.JTextField waterDemandLandscape;
-    private javax.swing.JTextField waterDemandOneBHKInput;
+    private javax.swing.JTextField ugrFireFightingTank;
     private javax.swing.JPanel waterDemandOverviewPanel;
     private javax.swing.JButton waterDemandPDFBtn;
-    private javax.swing.JTextField waterDemandPODs;
-    private javax.swing.JTextField waterDemandServant;
-    private javax.swing.JTextField waterDemandStudioInput;
-    private javax.swing.JTextField waterDemandSwimmingPool;
-    private javax.swing.JPanel waterDemandTab;
-    private javax.swing.JLabel waterRequirementLbl;
-    private javax.swing.JTable waterRequirementTbl;
     // End of variables declaration//GEN-END:variables
 
     private void addCheckBoxForTower(String towerName) {
@@ -2949,15 +2560,23 @@ public class DataCalculator extends javax.swing.JFrame {
         towerGroupPanel.add(checkbox);
         towerGroupPanel.revalidate();
         towerGroupPanel.repaint();
-//        towerGroupScrollPane.revalidate();
-//        towerGroupScrollPane.repaint();
     }
+    
     private void removeCheckBox(String towerName) {
         Component componentByName = getComponentByName("checkBox"+towerName, towerGroupPanel);
         if(componentByName != null) {
             towerGroupPanel.remove(componentByName);
             towerGroupPanel.revalidate();
             towerGroupPanel.repaint();
+        }
+    }
+    
+    private void unCheckGroupedTowers() {
+        Component[] components = towerGroupPanel.getComponents();
+        for (Component component : components) {
+            JCheckBox checkBox = (JCheckBox) component;
+            checkBox.setSelected(false);
+            checkBox.setEnabled(true);
         }
     }
 
@@ -2968,7 +2587,7 @@ public class DataCalculator extends javax.swing.JFrame {
             componentMap.put(components[i].getName(), components[i]);
         }
         if (componentMap.containsKey(towerName)) {
-                return (Component) componentMap.get(towerName);
+            return (Component) componentMap.get(towerName);
         }
         else 
             return null;

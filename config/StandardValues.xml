@@ -271,4 +271,20 @@
       <description>in days</description>
     </com.pc.plumbit.model.StandardValues>
   </entry>
+  <entry>
+	<com.pc.plumbit.enums.StandardType>OHT_FIRE_FIGHTING_TANK</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.model.StandardValues>
+      <value>10000</value>
+      <round>true</round>
+      <description>as per NBC</description>
+    </com.pc.plumbit.model.StandardValues>
+  </entry>
+  <entry>
+	<com.pc.plumbit.enums.StandardType>UGR_FIRE_FIGHTING_TANK</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.model.StandardValues>
+      <value>200000</value>
+      <round>true</round>
+      <description>as per previous project experience</description>
+    </com.pc.plumbit.model.StandardValues>
+  </entry>
 </map>
