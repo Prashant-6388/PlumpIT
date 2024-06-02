@@ -54,6 +54,7 @@ public enum StandardType {
     STP_FLUSHING_TANK("STP FLUSHING TANK"),
     
     LANDSCAPE_AREA_WATER_PERCENTAGE("Landscape water percentage"),
+    SWIMMING_POOL_AREA_PERCENT("Swimming pool area percentage"),
     UGR_FIRE_FIGHTING_TANK("UGR FIRE FIGHTING TANK"),
     OHT_FIRE_FIGHTING_TANK("OHT FIRE FIGHTING TANK")
     ;

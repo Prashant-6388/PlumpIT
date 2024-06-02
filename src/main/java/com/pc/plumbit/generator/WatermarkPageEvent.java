@@ -48,10 +48,20 @@ class WatermarkPageEvent extends PdfPageEventHelper {
         content.endText();
         content.restoreState();
         
+         // Draw footer line
+        content = writer.getDirectContent();
+        content.saveState();
+        content.setLineWidth(1);
+        content.moveTo(document.left(), document.bottom() - 10);
+        content.lineTo(document.right(), document.bottom() - 10);
+        content.stroke();
+        content.restoreState();
+       
         content = writer.getDirectContent();
         content.beginText();
         content.setFontAndSize(baseFont, 8);
         content.setColorFill(Color.LIGHT_GRAY);
+        content.showTextAligned(Element.ALIGN_CENTER, "Company name", document.getPageSize().getWidth()/2, document.bottom() - 20, 0);
         content.showTextAligned(Element.ALIGN_RIGHT, "Page " + writer.getPageNumber(), document.right() - 20, document.bottom() - 20, 0);
         content.endText();
     }

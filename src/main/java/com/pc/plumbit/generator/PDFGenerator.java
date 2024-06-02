@@ -87,15 +87,13 @@ public class PDFGenerator {
                 
                 document.open();
 
-                addWaterCriteriaTable(document, pdfData.getStandardValMap(), pdfData.getLandscapeAreaPercent(), 
-                        pdfData.getSwimmingPoolCapacityPercent(), pdfData.getProjectName());
+                addWaterCriteriaTable(document, pdfData.getStandardValMap(), pdfData.getProjectName());
                 List<ConsumptionDetail> consumptionDetails = new ArrayList();
 
                 createWaterDemandDescription(document);
                 createTowerWaterDemand(document, pdfData.getStandardValMap(), pdfData.getTowersList(), consumptionDetails);
                 if(!pdfData.getOutsideAreaMap().isEmpty()) {
-                    createMiscellaneousTable(document, pdfData.getStandardValMap(), pdfData.getOutsideAreaMap(), 
-                            pdfData.getLandscapeAreaPercent(), pdfData.getSwimmingPoolCapacityPercent(), consumptionDetails);
+                    createMiscellaneousTable(document, pdfData.getStandardValMap(), pdfData.getOutsideAreaMap(),consumptionDetails);
                 }
 
                 createTableRow(document, "Notes : ", 12, courier, Element.ALIGN_LEFT , Element.ALIGN_LEFT, false, false);
@@ -131,10 +129,10 @@ public class PDFGenerator {
                 createTableRow(document,"",12,null,0,0,false,false);
                 createUGRTable(document, pdfData.getStandardValMap(), totalOutsideDomestic, pdfData.getGroupedTowerNamesList(), consumptionDetails);
                 createOHTCapacity(document, pdfData.getStandardValMap(), consumptionDetails);
-                for (ConsumptionDetail details : consumptionDetails) {
+                /*for (ConsumptionDetail details : consumptionDetails) {
                     System.out.println(details.getName() + " : " + details.getDomestic() +", "+details.getFlush() 
                             + ", "+details.getSewer() +", "+details.getType());
-                } 
+                }*/ 
                 
                 pdfWriter.flush();
                 document.close();
@@ -151,8 +149,7 @@ public class PDFGenerator {
         }
     }
     
-    private static void addWaterCriteriaTable(Document document, HashMap<StandardType, StandardValues> standardValMap, 
-            String landscapeAreaPercent, String swimmingPoolCapacityPercent, String projectName) {
+    private static void addWaterCriteriaTable(Document document, HashMap<StandardType, StandardValues> standardValMap, String projectName) {
         float[] columnDefinitionSize = {40F, 80F, 30F, 120F, 40F, 80F, 40F, 130F, 90F};
         
         PdfPCell cell = null;
@@ -269,7 +266,7 @@ public class PDFGenerator {
         addTableCell(table, "-", courier);
 
         addTableCell(table, StandardType.LANDSCAPE.getValue(), courier);
-        addTableCell(table, String.valueOf(landscapeAreaPercent), courier);
+        addTableCell(table, DataFormater.getStandardValue(standardValMap.get(StandardType.LANDSCAPE_AREA_WATER_PERCENTAGE)), courier);
         addTableCell(table, "ltr per sq. m of green area", courier);
 
         //row 10
@@ -278,7 +275,7 @@ public class PDFGenerator {
         addTableCell(table, "-", courier);
 
         addTableCell(table, StandardType.SWIMMING_POOL.getValue(), courier);
-        addTableCell(table, String.valueOf(swimmingPoolCapacityPercent), courier);
+        addTableCell(table, DataFormater.getStandardValue(standardValMap.get(StandardType.SWIMMING_POOL_AREA_PERCENT)), courier);
         addTableCell(table, "of pool capacity", courier);
 
         //row 10
@@ -475,13 +472,13 @@ public class PDFGenerator {
     }
 
     private static void createMiscellaneousTable(Document document, HashMap<StandardType, StandardValues> standardValMap, 
-            TreeMap<StandardType, Integer> outsideAreaMap, String landscapeAreaPercent, String swimmingPoolCapacityPercent, List<ConsumptionDetail> consumptionDetails) {
+            TreeMap<StandardType, Integer> outsideAreaMap, List<ConsumptionDetail> consumptionDetails) {
         createTableRow(document, "MISCELLANEOUS ", 12, courierBold, Element.ALIGN_CENTER, Element.ALIGN_CENTER, false, false);
 
         PdfPTable table = new PdfPTable(COLUMN__SIZES);
         table.setWidthPercentage(100);
-        int landScapeArea = addLandScapeRow(table, standardValMap, outsideAreaMap, landscapeAreaPercent, consumptionDetails);
-        double swimmingPoolArea = addSwimmingPoolRow(table, standardValMap, outsideAreaMap, swimmingPoolCapacityPercent, consumptionDetails);
+        int landScapeArea = addLandScapeRow(table, standardValMap, outsideAreaMap, consumptionDetails);
+        double swimmingPoolArea = addSwimmingPoolRow(table, standardValMap, outsideAreaMap, consumptionDetails);
         int clubHouseArea = addClubHouseRow(table, standardValMap, outsideAreaMap, consumptionDetails);
         addMiscTotalRow(table, consumptionDetails);
         document.add(table);
@@ -519,7 +516,7 @@ public class PDFGenerator {
         addTableCell(table, String.valueOf(totalClubHouseWaterReq), courier);
 
         double sewerWaterConsumption = (domesticWtrReqClubHouse * domPercentageToSewer/100) + (clubHouseFlushingWater * flushPercentageToSewer/100);
-        System.out.println("club sewer : "+sewerWaterConsumption);
+//        System.out.println("club sewer : "+sewerWaterConsumption);
         addTableCell(table, String.valueOf(sewerWaterConsumption), courier);
 
         ConsumptionDetail details = new ConsumptionDetail("Club house", "", domesticWtrReqClubHouse, clubHouseFlushingWater, sewerWaterConsumption, ConsumptionType.OUTSIDE_AREA);
@@ -529,16 +526,16 @@ public class PDFGenerator {
     }
 
     private static double addSwimmingPoolRow(PdfPTable table, HashMap<StandardType, StandardValues> standardValMap, TreeMap<StandardType, Integer> outsideAreaMap, 
-            String swimmingPoolCapacityPercent, List<ConsumptionDetail> consumptionDetails) {
+            List<ConsumptionDetail> consumptionDetails) {
         addTableCell(table,"2",courier, new CellStyle(true));
         addTableCell(table, StandardType.SWIMMING_POOL.getValue() + "Capacity (cum)",courier);
         int swimmingPoolArea = outsideAreaMap.get(StandardType.SWIMMING_POOL);
         addTableCell(table, String.valueOf(swimmingPoolArea), courier);
         addTableCell(table, "-", courier);
-        double wtrReqSwimmingPool = Integer.parseInt(swimmingPoolCapacityPercent);
+        double wtrReqSwimmingPool = (double) standardValMap.get(StandardType.SWIMMING_POOL_AREA_PERCENT).getValue();
         addTableCell(table,  wtrReqSwimmingPool + "%", courier);
         //
-        double domesticWaterConsumption = swimmingPoolArea * (wtrReqSwimmingPool/100) * 1000;
+        double domesticWaterConsumption = (int)(swimmingPoolArea * (wtrReqSwimmingPool/100) * 1000);
         addTableCell(table, String.valueOf(domesticWaterConsumption), courier);
         int flushWaterConsumption = 0;
         addTableCell(table, String.valueOf(flushWaterConsumption), courier);
@@ -557,7 +554,7 @@ public class PDFGenerator {
     }
 
     private static int addLandScapeRow(PdfPTable table, HashMap<StandardType, StandardValues> standardValMap, TreeMap<StandardType, Integer> outsideAreaMap, 
-            String landscapeAreaPercent, List<ConsumptionDetail> consumptionDetails) {
+            List<ConsumptionDetail> consumptionDetails) {
         addTableCell(table,"1",courier, new CellStyle(true));
         addTableCell(table, StandardType.LANDSCAPE.getValue() + " (sq.m)",courier);
         
@@ -572,7 +569,7 @@ public class PDFGenerator {
         addTableCell(table, String.valueOf(domesticWaterConsumption), courier);
         addTableCell(table, String.valueOf(domesticWaterConsumption), courier);
 
-        int waterReqForLandscapeArea = Integer.parseInt(landscapeAreaPercent);
+        int waterReqForLandscapeArea = (int)standardValMap.get(StandardType.LANDSCAPE_AREA_WATER_PERCENTAGE).getValue();
         addTableCell(table, String.valueOf(waterReqForLandscapeArea), courier);
 
         int landscapeFlushWaterReq = landscapeArea * waterReqForLandscapeArea;

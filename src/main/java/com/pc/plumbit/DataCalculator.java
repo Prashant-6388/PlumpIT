@@ -14,6 +14,7 @@ import com.pc.plumbit.model.StandardValues;
 import com.pc.plumbit.model.TowerData;
 import com.pc.utils.DataFormater;
 import com.pc.utils.StyleFormatter;
+import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.StreamException;
 import java.awt.Component;
 import java.awt.Font;
@@ -22,17 +23,21 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JTabbedPane;
 import javax.swing.UIManager;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.table.DefaultTableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,9 +67,11 @@ public class DataCalculator extends javax.swing.JFrame {
      * Creates new form DataCalculator
      */
     public DataCalculator() {
+        initApp();
+    }
+    
+    private void initApp(){
         initComponents();
-        log.info("starting applicatin : "+LocalDateTime.now());
-
         initConfigs();
         initTowerTable();
         initOfficeTable();
@@ -112,6 +119,34 @@ public class DataCalculator extends javax.swing.JFrame {
         StyleFormatter.setTableColumnAlignment(towerGroupTable, JLabel.CENTER, true);
     }
     
+    public DataCalculator(PdfData projectData) {
+        initApp();
+        setStandardValues(projectData.getStandardValMap());
+        
+        this.towersList = projectData.getTowersList();
+        for(TowerData towerData : towersList) {
+            addRowToTowerTable(towerData.getName(), towerData.getFlatsData() ,false);
+            addTowerDataOverviewRow(towerData.getName(), towerData.getFlatsData());
+        }
+
+        this.officesList = projectData.getOfficesList();
+        this.outsideAreaMap = projectData.getOutsideAreaMap();
+
+        landscapeAreaInput.setText(String.valueOf(outsideAreaMap.get(StandardType.LANDSCAPE)));
+        clubHouseAreaInput.setText(String.valueOf(outsideAreaMap.get(StandardType.CLUB_HOUSE)));
+        swimmingAreaInput.setText(String.valueOf(outsideAreaMap.get(StandardType.SWIMMING_POOL)));
+
+        List<List<String>> groupedTowerNames = projectData.getGroupedTowerNamesList();
+        for(List<String> groupedTowers : groupedTowerNames) {
+            addGroupedTowerRow(groupedTowers);
+        }
+                
+        createOverview();
+        projectNameInput.setText(projectData.getProjectName());
+        tabbedPane.setEnabledAt(1, true);
+        tabbedPane.setEnabledAt(2, true);
+    }
+    
     private void initTowerTable() {
         //String[] tableHeaders= {"2 BHK, 3 BHK, 3.5 BHK, 4 BHK"};
         dtm = new DefaultTableModel(0, 0);
@@ -128,8 +163,8 @@ public class DataCalculator extends javax.swing.JFrame {
         towerDataTable.setModel(dtm);
         towerDataTable.setDefaultEditor(Object.class, null);
         DataInitializer.setTableStyling(towerDataTable);
-        
     }
+    
     private void initOfficeTable() {
         //String[] tableHeaders= {"2 BHK, 3 BHK, 3.5 BHK, 4 BHK"};
         dtmOffice = new DefaultTableModel(0, 0);
@@ -208,8 +243,9 @@ public class DataCalculator extends javax.swing.JFrame {
         ohtFireFightingTank.setText(DataFormater.getStandardValue(standardValues.get(StandardType.OHT_FIRE_FIGHTING_TANK)));
         ugrFireFightingTank.setText(DataFormater.getStandardValue(standardValues.get(StandardType.UGR_FIRE_FIGHTING_TANK)));
         
-        swimmingPoolCapacity.setSelectedItem("5");
-        
+        landscapeAreaWater.setSelectedItem(DataFormater.getStandardValue(standardValues.get(StandardType.LANDSCAPE_AREA_WATER_PERCENTAGE)));
+        swimmingPoolCapacity.setSelectedItem(DataFormater.getStandardValue(standardValues.get(StandardType.SWIMMING_POOL_AREA_PERCENT)));
+
     }
     
     private void updateStandardFieldEditiability(boolean allowEdit){
@@ -429,8 +465,9 @@ public class DataCalculator extends javax.swing.JFrame {
         jLabel77 = new javax.swing.JLabel();
         jLabel78 = new javax.swing.JLabel();
         pdfLocationInput = new javax.swing.JTextField();
+        saveProjectBtn = new javax.swing.JButton();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
         setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         setResizable(false);
 
@@ -1484,13 +1521,12 @@ public class DataCalculator extends javax.swing.JFrame {
         });
         jScrollPane4.setViewportView(officeDataTable);
 
-        towerGroupTable.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         towerGroupTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
             new String [] {
-                "Sr.", "<html>Grouped Towers</html>"
+                "<html><b>Sr.</b></html>", "<html><b>Grouped Towers</b></html>"
             }
         ) {
             Class[] types = new Class [] {
@@ -1781,6 +1817,18 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        saveProjectBtn.setBackground(new java.awt.Color(242, 242, 242));
+        saveProjectBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/pc/images/saveBtnIcon2.png"))); // NOI18N
+        saveProjectBtn.setMaximumSize(new java.awt.Dimension(50, 50));
+        saveProjectBtn.setMinimumSize(new java.awt.Dimension(50, 50));
+        saveProjectBtn.setPreferredSize(new java.awt.Dimension(30, 30));
+        saveProjectBtn.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/com/pc/images/saveBtn.png"))); // NOI18N
+        saveProjectBtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                saveProjectBtnActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout overviewPanelLayout = new javax.swing.GroupLayout(overviewPanel);
         overviewPanel.setLayout(overviewPanelLayout);
         overviewPanelLayout.setHorizontalGroup(
@@ -1800,13 +1848,19 @@ public class DataCalculator extends javax.swing.JFrame {
                                 .addComponent(jLabel65)
                                 .addComponent(waterDemandOverviewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addComponent(outdoorOverviewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(overviewPanelLayout.createSequentialGroup()
-                                .addComponent(jLabel68)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addGroup(overviewPanelLayout.createSequentialGroup()
+                                        .addComponent(jLabel68)
+                                        .addGap(0, 0, Short.MAX_VALUE))
+                                    .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, overviewPanelLayout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(saveProjectBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(48, 48, 48)))))
                 .addContainerGap())
         );
         overviewPanelLayout.setVerticalGroup(
@@ -1828,14 +1882,19 @@ public class DataCalculator extends javax.swing.JFrame {
                     .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel69)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(outdoorOverviewPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 39, Short.MAX_VALUE)
-                .addComponent(waterDemandPDFBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(11, 11, 11))
+                .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(overviewPanelLayout.createSequentialGroup()
+                        .addComponent(jLabel69)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(outdoorOverviewPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
+                        .addComponent(waterDemandPDFBtn, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(overviewPanelLayout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(saveProjectBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGap(19, 19, 19))
         );
 
         tabbedPane.addTab("Overview", overviewPanel);
@@ -1874,21 +1933,23 @@ public class DataCalculator extends javax.swing.JFrame {
             } else if(pdfLocationInput.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Empty pdf location", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
-                PdfData.PdfDataBuilder builder = new PdfData.PdfDataBuilder(standardValMap, towersList);
-                builder.setOfficesList(officesList)
-                        .setOutsideAreaMap(outsideAreaMap)
-                        .setLandscapeAreaPercent(landscapeAreaWater.getSelectedItem().toString())
-                        .setSwimmingPoolCapacityPercent(swimmingPoolCapacity.getSelectedItem().toString())
-                        .setGroupedTowerNamesList(groupedTowerNamesList)
-                        .setProjectName(projectNameInput.getText())
-                        .setPdfLocation(pdfLocationInput.getText());
-                
+                PdfData.PdfDataBuilder builder = getPdfDataBuilder();
+                builder.setPdfLocation(pdfLocationInput.getText());
                 PDFGenerator.generateWaterDemandPDF(builder.build(), this);
             }
         } catch (FileNotFoundException ex) {
             log.error("Error file reading", ex);
         }
     }//GEN-LAST:event_waterDemandPDFBtnActionPerformed
+
+    private PdfData.PdfDataBuilder getPdfDataBuilder() {
+        PdfData.PdfDataBuilder builder = new PdfData.PdfDataBuilder(standardValMap, towersList);
+        builder.setOfficesList(officesList)
+                .setOutsideAreaMap(outsideAreaMap)
+                .setGroupedTowerNamesList(groupedTowerNamesList)
+                .setProjectName(projectNameInput.getText());
+        return builder;
+    }
 
     private void outsideAreaBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_outsideAreaBtnActionPerformed
         boolean valid = true;
@@ -1917,29 +1978,17 @@ public class DataCalculator extends javax.swing.JFrame {
         } else {
             outsideArea.clear();
         }
+        
+        StandardValues swimmingPoolPercent = standardValMap.get(StandardType.SWIMMING_POOL_AREA_PERCENT);
+        swimmingPoolPercent.setValue(Double.parseDouble(swimmingPoolCapacity.getSelectedItem().toString()));
+        standardValMap.put(StandardType.SWIMMING_POOL_AREA_PERCENT,swimmingPoolPercent);
+
+        StandardValues landscapeAreaPercent = standardValMap.get(StandardType.LANDSCAPE_AREA_WATER_PERCENTAGE);
+        landscapeAreaPercent.setValue(Double.parseDouble(landscapeAreaWater.getSelectedItem().toString()));
+        standardValMap.put(StandardType.LANDSCAPE_AREA_WATER_PERCENTAGE,landscapeAreaPercent);
     }//GEN-LAST:event_outsideAreaBtnActionPerformed
 
     private void inputDataNextBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_inputDataNextBtnActionPerformed
-        System.out.println("----------Input values-----------");
-        towersList.forEach( towerData -> {
-            System.out.println("-------------TOWER:"+towerData.getName()+" --------------");
-            towerData.getFlatsData().keySet().forEach(key -> {
-                System.out.println(key + ":" + towerData.getFlatsData().get(key));
-            });
-        });
-        
-        System.out.println("-------------Office:--------------");
-        officesList.forEach(map -> {
-            map.keySet().forEach(key -> {
-                System.out.println(key +":"+map.get(key));
-            });
-        });
-                
-        System.out.println("------------Outside area-----------");
-        outsideAreaMap.keySet().forEach(key -> {
-            System.out.println(key + ":" + outsideAreaMap.get(key));
-        });
-        
         if (towersList.size() > 0 || officesList.size() > 0) {
             tabbedPane.setEnabledAt(2, true);
             tabbedPane.setSelectedIndex(2);
@@ -2003,17 +2052,7 @@ public class DataCalculator extends javax.swing.JFrame {
             }
             towersList.forEach(towerData -> {
                 TreeMap<StandardType, Integer> flatsData = towerData.getFlatsData();
-                dtmTowerDataOverview.addRow(new Object[] { 
-                    towerData.getName(),
-                    flatsData.get(StandardType.ONE_BHK).toString(),
-                    flatsData.get(StandardType.TWO_BHK).toString(),
-                    flatsData.get(StandardType.TWO_N_HALF_BHK).toString(),
-                    flatsData.get(StandardType.THREE_BHK).toString(),
-                    flatsData.get(StandardType.THREE_N_HALF_BHK).toString(),
-                    flatsData.get(StandardType.FOUR_BHK).toString(),
-                    flatsData.get(StandardType.FOUR_AND_HALF_BHK).toString(),
-                    flatsData.get(StandardType.STUDIO).toString()
-                });
+                addTowerDataOverviewRow(towerData.getName(), flatsData);
                 towerDataOveriewTable.setVisible(true);
             });
         } else {
@@ -2021,23 +2060,40 @@ public class DataCalculator extends javax.swing.JFrame {
         }
     }
     
+    private void addTowerDataOverviewRow(String towerName, TreeMap<StandardType, Integer> flatsData) {
+        dtmTowerDataOverview.addRow(new Object[] { 
+            towerName,
+            flatsData.get(StandardType.ONE_BHK).toString(),
+            flatsData.get(StandardType.TWO_BHK).toString(),
+            flatsData.get(StandardType.TWO_N_HALF_BHK).toString(),
+            flatsData.get(StandardType.THREE_BHK).toString(),
+            flatsData.get(StandardType.THREE_N_HALF_BHK).toString(),
+            flatsData.get(StandardType.FOUR_BHK).toString(),
+            flatsData.get(StandardType.FOUR_AND_HALF_BHK).toString(),
+            flatsData.get(StandardType.STUDIO).toString()
+        });
+    }
+    
     private void addOfficeDataOverview() {
-        while(dtmOfficeOverview.getRowCount()>0){
-            dtmOfficeOverview.removeRow(dtmOfficeOverview.getRowCount()-1);
+        while (dtmOfficeOverview.getRowCount() > 0) {
+            dtmOfficeOverview.removeRow(dtmOfficeOverview.getRowCount() - 1);
         }
-        if(!officesList.isEmpty()) {
+        if (!officesList.isEmpty()) {
             DataInitializer.setTableStyling(officeDataOverviewTable);
-            
-            officesList.forEach(towerData -> {
-                dtmOfficeOverview.addRow(new Object[] { 
-                    towerData.get(StandardType.OFFICE),
-                    towerData.get(StandardType.SHOWROOM),
-                });
-            });
+            addOfficeTableDataOverview();
             officeDataOverviewTable.setVisible(true);
         } else {
             officeDataOverviewTable.setVisible(false);
         }
+    }
+    
+    private void addOfficeTableDataOverview() {
+        officesList.forEach(officeData -> {
+            dtmOfficeOverview.addRow(new Object[] { 
+                officeData.get(StandardType.OFFICE),
+                officeData.get(StandardType.SHOWROOM),
+            });
+        });
     }
     
     private void addOutdoorDataOverview() {
@@ -2137,20 +2193,7 @@ public class DataCalculator extends javax.swing.JFrame {
                 
         if(valid) {
             towersList.add(new TowerData(towerName, flatPerTower));
-            dtm.addRow(new Object[] { 
-                towerName,
-                flatPerTower.get(StandardType.ONE_BHK),
-                flatPerTower.get(StandardType.TWO_BHK),
-                flatPerTower.get(StandardType.TWO_N_HALF_BHK),
-                flatPerTower.get(StandardType.THREE_BHK),
-                flatPerTower.get(StandardType.THREE_N_HALF_BHK),
-                flatPerTower.get(StandardType.FOUR_BHK),
-                flatPerTower.get(StandardType.FOUR_AND_HALF_BHK),
-                flatPerTower.get(StandardType.STUDIO),
-                "<html><div style='text-align:center; color:red'><b> X </b></div></html>"
-            });
-            towerNameList.add(towerName);
-            addCheckBoxForTower(towerName);
+            addRowToTowerTable(towerName, flatPerTower);
         } else {
             flatPerTower.clear();
             JOptionPane.showMessageDialog(this, errorMsg.toString(), "Error",JOptionPane.ERROR_MESSAGE);
@@ -2197,16 +2240,20 @@ public class DataCalculator extends javax.swing.JFrame {
         
         if(valid) {
             officesList.add(commertials);
-            dtmOffice.addRow(new Object[] { 
-                commertials.get(StandardType.OFFICE),
-                commertials.get(StandardType.SHOWROOM),
-                "<html><div style='text-align:center; color:red'><b> X </b></div></html>"
-            });
+            addOfficeDataRow(commertials);
         } else {
             commertials.clear();
             JOptionPane.showMessageDialog(this, errorMsg.toString(), "Error", JOptionPane.ERROR_MESSAGE);
         }
     }//GEN-LAST:event_addOfficeDataBtnActionPerformed
+
+    private void addOfficeDataRow(TreeMap<StandardType, Integer> commertials) {
+        dtmOffice.addRow(new Object[]{
+            commertials.get(StandardType.OFFICE),
+            commertials.get(StandardType.SHOWROOM),
+            "<html><div style='text-align:center; color:red'><b> X </b></div></html>"
+        });
+    }
 
     private void officeDataTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_officeDataTableMouseClicked
         int row = officeDataTable.rowAtPoint(evt.getPoint());
@@ -2312,16 +2359,20 @@ public class DataCalculator extends javax.swing.JFrame {
                 }
             }
         }
-        if(!groupedTowers.isEmpty()) {
+        addGroupedTowerRow(groupedTowers);
+    }//GEN-LAST:event_groupTowersActionPerformed
+
+    private void addGroupedTowerRow(List<String> groupedTowers) {
+        if (!groupedTowers.isEmpty()) {
             groupedTowerNamesList.add(groupedTowers);
             DefaultTableModel model = (DefaultTableModel) towerGroupTable.getModel();
-            
+
             model.addRow(new Object[]{
                 groupedTowerNamesList.size(),
                 String.join(",", groupedTowers)
             });
         }
-    }//GEN-LAST:event_groupTowersActionPerformed
+    }
 
     private void clearGroupedTowerBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_clearGroupedTowerBtnActionPerformed
         unCheckGroupedTowers();
@@ -2338,6 +2389,19 @@ public class DataCalculator extends javax.swing.JFrame {
     private void projectNameInputActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_projectNameInputActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_projectNameInputActionPerformed
+
+    private void saveProjectBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveProjectBtnActionPerformed
+        try {
+            PdfData projectData = getPdfDataBuilder().build();
+            String location = JOptionPane.showInputDialog(this, "Location:", "Save Project", JOptionPane.QUESTION_MESSAGE);
+            XStream xstream = DataInitializer.getXstream();
+            xstream.toXML(projectData, new FileOutputStream(location+"/"+projectData.getProjectName()+".pscs"));
+            JOptionPane.showMessageDialog(this, "Project saved successfully");
+        } catch (FileNotFoundException ex) {
+            log.error("Unable to save project",ex);
+            JOptionPane.showMessageDialog(this, "Save project failed!", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_saveProjectBtnActionPerformed
 
     private void generateWaterDemandPDF() {
         
@@ -2363,17 +2427,7 @@ public class DataCalculator extends javax.swing.JFrame {
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
-        try {
-//            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-//                if ("Nimbus".equals(info.getName())) {
-//                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-//                    break;
-//                }
-//            }
-            UIManager.setLookAndFeel(new FlatLightLaf());
-        } catch (Exception ex) {
-            java.util.logging.Logger.getLogger(DataCalculator.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        }
+       
         //</editor-fold>
         
         //</editor-fold>
@@ -2522,6 +2576,7 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JTextField projectNameInput;
     private javax.swing.JTextField rawWaterTankPercent;
     private javax.swing.JPanel residentialPanel;
+    private javax.swing.JButton saveProjectBtn;
     private javax.swing.JTextField stdBasementArea;
     private javax.swing.JTextField stdExtraAreaCatered;
     private javax.swing.JTextField stdFrictionLossInput;
@@ -2554,14 +2609,18 @@ public class DataCalculator extends javax.swing.JFrame {
     // End of variables declaration//GEN-END:variables
 
     private void addCheckBoxForTower(String towerName) {
+        addCheckBoxForTower(towerName, true);
+    }
+  
+    private void addCheckBoxForTower(String towerName, boolean status){
         JCheckBox checkbox = new JCheckBox(towerName, false);
         checkbox.setName(towerName);
         checkbox.setMargin(new Insets(5,5,5,5));
+        checkbox.setEnabled(status);
         towerGroupPanel.add(checkbox);
         towerGroupPanel.revalidate();
         towerGroupPanel.repaint();
     }
-    
     private void removeCheckBox(String towerName) {
         Component componentByName = getComponentByName("checkBox"+towerName, towerGroupPanel);
         if(componentByName != null) {
@@ -2593,6 +2652,26 @@ public class DataCalculator extends javax.swing.JFrame {
             return null;
     }
 
+    private void addRowToTowerTable(String towerName, TreeMap<StandardType,Integer> flatPerTower) {
+        addRowToTowerTable(towerName, flatPerTower, true);
+    }
+    
+    private void addRowToTowerTable(String towerName, TreeMap<StandardType,Integer> flatPerTower, boolean checkboxStatus) {
+        dtm.addRow(new Object[] { 
+            towerName,
+            flatPerTower.get(StandardType.ONE_BHK),
+            flatPerTower.get(StandardType.TWO_BHK),
+            flatPerTower.get(StandardType.TWO_N_HALF_BHK),
+            flatPerTower.get(StandardType.THREE_BHK),
+            flatPerTower.get(StandardType.THREE_N_HALF_BHK),
+            flatPerTower.get(StandardType.FOUR_BHK),
+            flatPerTower.get(StandardType.FOUR_AND_HALF_BHK),
+            flatPerTower.get(StandardType.STUDIO),
+            "<html><div style='text-align:center; color:red'><b> X </b></div></html>"
+        });
+        towerNameList.add(towerName);
+        addCheckBoxForTower(towerName, checkboxStatus);
+    }
 
 
 }

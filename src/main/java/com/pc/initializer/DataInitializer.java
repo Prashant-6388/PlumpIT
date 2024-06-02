@@ -30,6 +30,10 @@ public class DataInitializer {
     private static final String BASE_LOCATION = "./config/";
     private static XStream xstream;
     
+    private DataInitializer() {
+        initXstream();
+    }
+    
     private static void initXstream() {
         xstream = new XStream(new DomDriver());
         xstream.allowTypesByWildcard(new String[] {
@@ -38,6 +42,13 @@ public class DataInitializer {
         });
     }
 
+    public static XStream getXstream() {
+        if(xstream == null){
+            initXstream();
+        }
+        return xstream;
+    }
+    
     public static Map<String,List> setupConfigData(JTable populationCriteriaTbl, JTable domWaterRequirement) {
        
         Map<StandardType,StandardValues> populationCriteriaList = getPopulationCriteria();

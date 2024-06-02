@@ -19,8 +19,6 @@ public class PdfData {
     private List<TowerData> towersList;
     private List<TreeMap<StandardType, Integer>> officesList;
     private TreeMap<StandardType, Integer> outsideAreaMap;
-    private String landscapeAreaPercent;
-    private String swimmingPoolCapacityPercent;
     private List<List<String>> groupedTowerNamesList;
     private String projectName;
     private String pdfLocation;
@@ -30,8 +28,6 @@ public class PdfData {
         this.towersList = builder.towersList;
         this.officesList = builder.officesList;
         this.outsideAreaMap = builder.outsideAreaMap;
-        this.landscapeAreaPercent = builder.landscapeAreaPercent;
-        this.swimmingPoolCapacityPercent = builder.landscapeAreaPercent;
         this.groupedTowerNamesList = builder.groupedTowerNamesList;
         this.projectName = builder.projectName;
         this.pdfLocation = builder.pdfLocation;
@@ -53,14 +49,6 @@ public class PdfData {
         return outsideAreaMap;
     }
 
-    public String getLandscapeAreaPercent() {
-        return landscapeAreaPercent;
-    }
-
-    public String getSwimmingPoolCapacityPercent() {
-        return swimmingPoolCapacityPercent;
-    }
-
     public List<List<String>> getGroupedTowerNamesList() {
         return groupedTowerNamesList;
     }
@@ -80,8 +68,6 @@ public class PdfData {
         private List<TowerData> towersList;
         private List<TreeMap<StandardType, Integer>> officesList = new ArrayList<>();
         private TreeMap<StandardType, Integer> outsideAreaMap = new TreeMap<>();;
-        private String landscapeAreaPercent;
-        private String swimmingPoolCapacityPercent;
         private List<List<String>> groupedTowerNamesList = new ArrayList<>();;
         private String projectName;
         private String pdfLocation;
@@ -101,16 +87,6 @@ public class PdfData {
             return this;
         }
         
-        public PdfDataBuilder setLandscapeAreaPercent(String landscapeAreaPercent){
-            this.landscapeAreaPercent = landscapeAreaPercent;
-            return this;
-        }
-        
-        public PdfDataBuilder setSwimmingPoolCapacityPercent(String swimmingPoolCapacityPercent){
-            this.swimmingPoolCapacityPercent = swimmingPoolCapacityPercent;
-            return this;
-        }
-
         public PdfDataBuilder setGroupedTowerNamesList(List<List<String>> groupedTowerNamesList) {
             this.groupedTowerNamesList = groupedTowerNamesList;
             return this;

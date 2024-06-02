@@ -287,4 +287,20 @@
       <description>as per previous project experience</description>
     </com.pc.plumbit.model.StandardValues>
   </entry>
+  <entry>
+	<com.pc.plumbit.enums.StandardType>LANDSCAPE_AREA_WATER_PERCENTAGE</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.model.StandardValues>
+      <value>5</value>
+      <round>true</round>
+      <description>lit per  sq.m of green area</description>
+    </com.pc.plumbit.model.StandardValues>
+  </entry>
+  <entry>
+	<com.pc.plumbit.enums.StandardType>SWIMMING_POOL_AREA_PERCENT</com.pc.plumbit.enums.StandardType>
+	<com.pc.plumbit.model.StandardValues>
+	  <value>5</value>
+	  <round>true</round>
+	  <description>% of Pool Capacity</description>
+	</com.pc.plumbit.model.StandardValues>
+  </entry>
 </map>
