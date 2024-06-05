@@ -49,18 +49,85 @@ public class MainWindow extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        menuWindowPanel = new javax.swing.JPanel();
+        contactPane = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         menuItemNew = new javax.swing.JMenuItem();
         menuItemOpen = new javax.swing.JMenuItem();
         menuItemClose = new javax.swing.JMenuItem();
         jMenu2 = new javax.swing.JMenu();
+        contactUsMenuItem = new javax.swing.JMenuItem();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setMinimumSize(new java.awt.Dimension(200, 200));
+        setSize(new java.awt.Dimension(200, 200));
+
+        jLabel1.setFont(new java.awt.Font("Perpetua Titling MT", 1, 12)); // NOI18N
+        jLabel1.setText("Phone :");
+
+        jLabel2.setFont(new java.awt.Font("Perpetua Titling MT", 1, 12)); // NOI18N
+        jLabel2.setText("Company Name");
+
+        jLabel3.setFont(new java.awt.Font("Perpetua Titling MT", 1, 12)); // NOI18N
+        jLabel3.setText("Email :");
+
+        jLabel4.setFont(new java.awt.Font("Perpetua Titling MT", 1, 12)); // NOI18N
+        jLabel4.setText("Website");
+
+        javax.swing.GroupLayout contactPaneLayout = new javax.swing.GroupLayout(contactPane);
+        contactPane.setLayout(contactPaneLayout);
+        contactPaneLayout.setHorizontalGroup(
+            contactPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, contactPaneLayout.createSequentialGroup()
+                .addContainerGap(163, Short.MAX_VALUE)
+                .addGroup(contactPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(contactPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(161, 161, 161))
+        );
+        contactPaneLayout.setVerticalGroup(
+            contactPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(contactPaneLayout.createSequentialGroup()
+                .addGap(20, 20, 20)
+                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jLabel4)
+                .addContainerGap(66, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout menuWindowPanelLayout = new javax.swing.GroupLayout(menuWindowPanel);
+        menuWindowPanel.setLayout(menuWindowPanelLayout);
+        menuWindowPanelLayout.setHorizontalGroup(
+            menuWindowPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(menuWindowPanelLayout.createSequentialGroup()
+                .addGap(61, 61, 61)
+                .addComponent(contactPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(61, 61, 61))
+        );
+        menuWindowPanelLayout.setVerticalGroup(
+            menuWindowPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(menuWindowPanelLayout.createSequentialGroup()
+                .addGap(30, 30, 30)
+                .addComponent(contactPane, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(30, 30, 30))
+        );
 
         jMenu1.setText("File");
 
         menuItemNew.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.ALT_DOWN_MASK));
+        menuItemNew.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/project-setup.png"))); // NOI18N
         menuItemNew.setText("New");
         menuItemNew.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -70,6 +137,7 @@ public class MainWindow extends javax.swing.JFrame {
         jMenu1.add(menuItemNew);
 
         menuItemOpen.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_O, java.awt.event.InputEvent.ALT_DOWN_MASK));
+        menuItemOpen.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/opened-folder.png"))); // NOI18N
         menuItemOpen.setText("Open");
         menuItemOpen.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -79,6 +147,7 @@ public class MainWindow extends javax.swing.JFrame {
         jMenu1.add(menuItemOpen);
 
         menuItemClose.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_C, java.awt.event.InputEvent.ALT_DOWN_MASK));
+        menuItemClose.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/close-window.png"))); // NOI18N
         menuItemClose.setText("Close");
         menuItemClose.setToolTipText("");
         menuItemClose.addActionListener(new java.awt.event.ActionListener() {
@@ -90,7 +159,17 @@ public class MainWindow extends javax.swing.JFrame {
 
         jMenuBar1.add(jMenu1);
 
-        jMenu2.setText("Edit");
+        jMenu2.setText("Help");
+        jMenu2.setSelectedIcon(new javax.swing.ImageIcon(getClass().getResource("/images/saveBtnIcon2.png"))); // NOI18N
+
+        contactUsMenuItem.setText("Reference Doc");
+        contactUsMenuItem.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                contactUsMenuItemActionPerformed(evt);
+            }
+        });
+        jMenu2.add(contactUsMenuItem);
+
         jMenuBar1.add(jMenu2);
 
         setJMenuBar(jMenuBar1);
@@ -99,11 +178,11 @@ public class MainWindow extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addComponent(menuWindowPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 277, Short.MAX_VALUE)
+            .addComponent(menuWindowPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
@@ -137,6 +216,9 @@ public class MainWindow extends javax.swing.JFrame {
     private void menuItemCloseActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_menuItemCloseActionPerformed
         System.exit(0);
     }//GEN-LAST:event_menuItemCloseActionPerformed
+
+    private void contactUsMenuItemActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_contactUsMenuItemActionPerformed
+    }//GEN-LAST:event_contactUsMenuItemActionPerformed
 
     /**
      * @param args the command line arguments
@@ -179,11 +261,18 @@ public class MainWindow extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel contactPane;
+    private javax.swing.JMenuItem contactUsMenuItem;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
     private javax.swing.JMenuItem menuItemClose;
     private javax.swing.JMenuItem menuItemNew;
     private javax.swing.JMenuItem menuItemOpen;
+    private javax.swing.JPanel menuWindowPanel;
     // End of variables declaration//GEN-END:variables
 }

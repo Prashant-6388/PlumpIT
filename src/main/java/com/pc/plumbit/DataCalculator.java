@@ -4,7 +4,6 @@
  */
 package com.pc.plumbit;
 
-import com.formdev.flatlaf.FlatLightLaf;
 import com.pc.plumbit.enums.StandardType;
 import com.pc.exceptions.InvalidInputException;
 import com.pc.initializer.DataInitializer;
@@ -24,20 +23,17 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.time.LocalDateTime;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.logging.Level;
+import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JTabbedPane;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.table.DefaultTableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,7 +106,14 @@ public class DataCalculator extends javax.swing.JFrame {
                 }
             }
         });
-        
+        try {
+            URL imageUrl = DataCalculator.class.getResource("/images/saveBtnIcon2.png");
+            ImageIcon icon = new ImageIcon(imageUrl);
+            saveProjectBtn.setIcon(icon);
+            saveProjectBtn.setText("");
+        } catch (Exception e) {
+            log.error("save button icon failed "+e.getMessage());
+        }
         towerGroupPanel.setLayout(new GridLayout(20,1));
         DataInitializer.setTableStyling(towerGroupTable);
         
@@ -130,6 +133,10 @@ public class DataCalculator extends javax.swing.JFrame {
         }
 
         this.officesList = projectData.getOfficesList();
+        for(TreeMap<StandardType,Integer> officeMap : officesList){
+            addOfficeDataRow(officeMap);
+        }
+        
         this.outsideAreaMap = projectData.getOutsideAreaMap();
 
         landscapeAreaInput.setText(String.valueOf(outsideAreaMap.get(StandardType.LANDSCAPE)));
@@ -1818,11 +1825,9 @@ public class DataCalculator extends javax.swing.JFrame {
         );
 
         saveProjectBtn.setBackground(new java.awt.Color(242, 242, 242));
-        saveProjectBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/com/pc/images/saveBtnIcon2.png"))); // NOI18N
+        saveProjectBtn.setText("Save");
         saveProjectBtn.setMaximumSize(new java.awt.Dimension(50, 50));
         saveProjectBtn.setMinimumSize(new java.awt.Dimension(50, 50));
-        saveProjectBtn.setPreferredSize(new java.awt.Dimension(30, 30));
-        saveProjectBtn.setPressedIcon(new javax.swing.ImageIcon(getClass().getResource("/com/pc/images/saveBtn.png"))); // NOI18N
         saveProjectBtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 saveProjectBtnActionPerformed(evt);
