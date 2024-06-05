@@ -51,10 +51,10 @@ public class MainWindow extends javax.swing.JFrame {
 
         menuWindowPanel = new javax.swing.JPanel();
         contactPane = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
+        labelPhone = new javax.swing.JLabel();
+        labelCompanyName = new javax.swing.JLabel();
+        labelEmail = new javax.swing.JLabel();
+        labelWebsite = new javax.swing.JLabel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         menuItemNew = new javax.swing.JMenuItem();
@@ -67,17 +67,17 @@ public class MainWindow extends javax.swing.JFrame {
         setMinimumSize(new java.awt.Dimension(200, 200));
         setSize(new java.awt.Dimension(200, 200));
 
-        jLabel1.setFont(new java.awt.Font("Perpetua Titling MT", 1, 12)); // NOI18N
-        jLabel1.setText("Phone :");
+        labelPhone.setFont(new java.awt.Font("Perpetua Titling MT", 1, 12)); // NOI18N
+        labelPhone.setText("Phone :");
 
-        jLabel2.setFont(new java.awt.Font("Perpetua Titling MT", 1, 12)); // NOI18N
-        jLabel2.setText("Company Name");
+        labelCompanyName.setFont(new java.awt.Font("Perpetua Titling MT", 1, 12)); // NOI18N
+        labelCompanyName.setText("Company Name");
 
-        jLabel3.setFont(new java.awt.Font("Perpetua Titling MT", 1, 12)); // NOI18N
-        jLabel3.setText("Email :");
+        labelEmail.setFont(new java.awt.Font("Perpetua Titling MT", 1, 12)); // NOI18N
+        labelEmail.setText("Email :");
 
-        jLabel4.setFont(new java.awt.Font("Perpetua Titling MT", 1, 12)); // NOI18N
-        jLabel4.setText("Website");
+        labelWebsite.setFont(new java.awt.Font("Perpetua Titling MT", 1, 12)); // NOI18N
+        labelWebsite.setText("Website");
 
         javax.swing.GroupLayout contactPaneLayout = new javax.swing.GroupLayout(contactPane);
         contactPane.setLayout(contactPaneLayout);
@@ -87,23 +87,23 @@ public class MainWindow extends javax.swing.JFrame {
                 .addContainerGap(163, Short.MAX_VALUE)
                 .addGroup(contactPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(contactPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(labelPhone, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(labelEmail, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(labelWebsite, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(labelCompanyName, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(161, 161, 161))
         );
         contactPaneLayout.setVerticalGroup(
             contactPaneLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(contactPaneLayout.createSequentialGroup()
                 .addGap(20, 20, 20)
-                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(labelCompanyName, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(labelPhone, javax.swing.GroupLayout.PREFERRED_SIZE, 21, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(labelEmail, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jLabel4)
+                .addComponent(labelWebsite)
                 .addContainerGap(66, Short.MAX_VALUE))
         );
 
@@ -263,13 +263,13 @@ public class MainWindow extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JPanel contactPane;
     private javax.swing.JMenuItem contactUsMenuItem;
-    private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JLabel labelCompanyName;
+    private javax.swing.JLabel labelEmail;
+    private javax.swing.JLabel labelPhone;
+    private javax.swing.JLabel labelWebsite;
     private javax.swing.JMenuItem menuItemClose;
     private javax.swing.JMenuItem menuItemNew;
     private javax.swing.JMenuItem menuItemOpen;
