@@ -27,13 +27,13 @@ public class StyleFormatter {
     public static void setTableColumnAlignment(JTable table, int alignment, boolean allColumns) {
         DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer();
         headerRenderer.setHorizontalAlignment(alignment);
-        headerRenderer.setVerticalAlignment(alignment);
+//        headerRenderer.setVerticalAlignment(alignment);
         headerRenderer.setForeground(Color.blue);
         table.getTableHeader().setDefaultRenderer(headerRenderer);
         
         DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer();
         cellRenderer.setHorizontalAlignment(alignment);
-        cellRenderer.setVerticalAlignment(alignment);
+//        cellRenderer.setVerticalAlignment(alignment);
         cellRenderer.setForeground(Color.black);
         int columnCount = table.getColumnModel().getColumnCount();
         for(int columnIndex=0 ; columnIndex < columnCount; columnIndex++) {

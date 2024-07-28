@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package com.pc.plumbit.model;
+package com.pc.plumbit.model.input;
 
 import com.pc.plumbit.enums.StandardType;
 import java.util.TreeMap;
@@ -12,15 +12,14 @@ import java.util.TreeMap;
  * @author Prashant
  */
 public class TowerData {
-    String name;
-    TreeMap<StandardType, Integer> flatsData;
+    private String name;
+    private TreeMap<StandardType, Integer> flatsData;
 
     public TowerData(String name, TreeMap<StandardType, Integer> numberOfFlats) {
         this.name = name;
         this.flatsData = numberOfFlats;
     }
 
-    
     public String getName() {
         return name;
     }

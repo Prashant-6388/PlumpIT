@@ -4,7 +4,12 @@
  */
 package com.pc.plumbit.model;
 
+import com.pc.plumbit.model.input.OfficeData;
+import com.pc.plumbit.model.input.TowerData;
 import com.pc.plumbit.enums.StandardType;
+import com.pc.plumbit.model.input.FireFightingDetails;
+import com.pc.plumbit.model.input.PlotArea;
+import com.pc.plumbit.model.input.CapacityDetails;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -17,11 +22,15 @@ import java.util.TreeMap;
 public class PdfData {
     private HashMap<StandardType, StandardValues> standardValMap;
     private List<TowerData> towersList;
-    private List<TreeMap<StandardType, Integer>> officesList;
+    private List<OfficeData> officesList;
     private TreeMap<StandardType, Integer> outsideAreaMap;
     private List<List<String>> groupedTowerNamesList;
     private String projectName;
     private String pdfLocation;
+    private CapacityDetails capacityDetailsResidential;
+    private CapacityDetails capacityDetailsCommertial;
+    private PlotArea plotArea;
+    private FireFightingDetails fireFightingDetails;
     
     public PdfData(PdfDataBuilder builder) {
         this.standardValMap = builder.standardValMap;
@@ -29,6 +38,10 @@ public class PdfData {
         this.officesList = builder.officesList;
         this.outsideAreaMap = builder.outsideAreaMap;
         this.groupedTowerNamesList = builder.groupedTowerNamesList;
+        this.capacityDetailsResidential = builder.capacityDetailsResidential;
+        this.capacityDetailsCommertial = builder.capacityDetailsCommertial;
+        this.plotArea = builder.plotArea;
+        this.fireFightingDetails = builder.fireFightingDetails;
         this.projectName = builder.projectName;
         this.pdfLocation = builder.pdfLocation;
     }
@@ -41,7 +54,7 @@ public class PdfData {
         return towersList;
     }
 
-    public List<TreeMap<StandardType, Integer>> getOfficesList() {
+    public List<OfficeData> getOfficesList() {
         return officesList;
     }
 
@@ -60,15 +73,51 @@ public class PdfData {
     public String getPdfLocation() {
         return pdfLocation;
     }
+
+    public CapacityDetails getCapacityDetailsResidential() {
+        return capacityDetailsResidential;
+    }
+
+    public void setCapacityDetails(CapacityDetails capacityDetailsResidential) {
+        this.capacityDetailsResidential = capacityDetailsResidential;
+    }
+
+    public CapacityDetails getCapacityDetailsCommertial() {
+        return capacityDetailsCommertial;
+    }
+
+    public void setCapacityDetailsCommertial(CapacityDetails capacityDetailsCommertial) {
+        this.capacityDetailsCommertial = capacityDetailsCommertial;
+    }
+
+    public PlotArea getPlotArea() {
+        return plotArea;
+    }
+
+    public void setPlotArea(PlotArea plotArea) {
+        this.plotArea = plotArea;
+    }
+
+    public FireFightingDetails getFireFightingDetails() {
+        return fireFightingDetails;
+    }
+
+    public void setFireFightingDetails(FireFightingDetails fireFightingDetails) {
+        this.fireFightingDetails = fireFightingDetails;
+    }
     
-    
-	
     public static class PdfDataBuilder {
         private HashMap<StandardType, StandardValues> standardValMap = new HashMap<>();
         private List<TowerData> towersList;
-        private List<TreeMap<StandardType, Integer>> officesList = new ArrayList<>();
-        private TreeMap<StandardType, Integer> outsideAreaMap = new TreeMap<>();;
-        private List<List<String>> groupedTowerNamesList = new ArrayList<>();;
+        private List<OfficeData> officesList = new ArrayList<>();
+        private TreeMap<StandardType, Integer> outsideAreaMap = new TreeMap<>();
+        private List<List<String>> groupedTowerNamesList = new ArrayList<>();
+        
+        private CapacityDetails capacityDetailsResidential;
+        private CapacityDetails capacityDetailsCommertial;
+        private PlotArea plotArea;
+        private FireFightingDetails fireFightingDetails;
+        
         private String projectName;
         private String pdfLocation;
 
@@ -77,7 +126,7 @@ public class PdfData {
             this.towersList = towersList;
         }
         
-        public PdfDataBuilder setOfficesList(List<TreeMap<StandardType, Integer>> officesList){
+        public PdfDataBuilder setOfficesList(List<OfficeData> officesList){
             this.officesList = officesList;
             return this;
         }
@@ -101,6 +150,26 @@ public class PdfData {
             this.pdfLocation = pdfLocation;
             return this;
         }
+        
+        public PdfDataBuilder setCapacityDetailsResidential(CapacityDetails capacityDetailsResidential) {
+            this.capacityDetailsResidential = capacityDetailsResidential;
+            return this;
+        }
+        
+        public PdfDataBuilder setCapacityDetailsCommertial(CapacityDetails capacityDetailsCommertial) {
+            this.capacityDetailsCommertial = capacityDetailsCommertial;
+            return this;
+        }
+        
+        public PdfDataBuilder setPlotArea(PlotArea plotArea) {
+            this.plotArea = plotArea;
+            return this;
+        }
+        
+        public PdfDataBuilder setFireFightingDetails(FireFightingDetails fireFightingDetails) {
+            this.fireFightingDetails = fireFightingDetails;
+            return this;
+        }                
         
         public PdfData build(){
             return new PdfData(this);

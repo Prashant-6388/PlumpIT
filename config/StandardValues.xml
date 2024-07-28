@@ -112,6 +112,46 @@
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
+	<com.pc.plumbit.enums.StandardType>LANDSCAPE_AREA_WATER_PERCENTAGE</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.model.StandardValues>
+      <value>5</value>
+      <round>true</round>
+      <description>lit per  sq.m of green area</description>
+    </com.pc.plumbit.model.StandardValues>
+  </entry>
+  <entry>
+	<com.pc.plumbit.enums.StandardType>SWIMMING_POOL_AREA_PERCENT</com.pc.plumbit.enums.StandardType>
+	<com.pc.plumbit.model.StandardValues>
+	  <value>5</value>
+	  <round>true</round>
+	  <description>% of Pool Capacity</description>
+	</com.pc.plumbit.model.StandardValues>
+  </entry>
+  <entry>
+	<com.pc.plumbit.enums.StandardType>SQ_MTR_PER_PERSON_AT_GROUND</com.pc.plumbit.enums.StandardType>
+	<com.pc.plumbit.model.StandardValues>
+	  <value>3</value>
+	  <round>true</round>
+	  <description>Sq. Mtr. Per people at ground Floor</description>
+	</com.pc.plumbit.model.StandardValues>
+  </entry>
+  <entry>
+	<com.pc.plumbit.enums.StandardType>SQ_MTR_PER_PERSON_ABOVE_GROUND</com.pc.plumbit.enums.StandardType>
+	<com.pc.plumbit.model.StandardValues>
+	  <value>6</value>
+	  <round>true</round>
+	  <description>Sq. Mtr. Per people above ground Floor</description>
+	</com.pc.plumbit.model.StandardValues>
+  </entry>
+  <entry>
+  <com.pc.plumbit.enums.StandardType>SQ_MTR_PER_PERSON_OFFICE</com.pc.plumbit.enums.StandardType>
+	<com.pc.plumbit.model.StandardValues>
+	  <value>10</value>
+	  <round>true</round>
+	  <description>Sq. Mtr. Per people</description>
+	</com.pc.plumbit.model.StandardValues>
+  </entry>
+  <entry>
     <com.pc.plumbit.enums.StandardType>WATER_DEMAND</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
       <value>135.0</value>
@@ -125,14 +165,6 @@
       <value>0.312</value>
       <round>false</round>
       <description>kg/person/day</description>
-    </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-    <com.pc.plumbit.enums.StandardType>SOLID_WASTE_LITER_20_FAMILY</com.pc.plumbit.enums.StandardType>
-    <com.pc.plumbit.model.StandardValues>
-      <value>65.9</value>
-      <round>false</round>
-      <description>Liter/20 families</description>
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
@@ -152,155 +184,67 @@
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>TERRACE</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>SOLID_WASTE_DRY_GARBAGE</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
-      <value>4214.00</value>
-      <round>true</round>
-      <description></description>
-    </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-    <com.pc.plumbit.enums.StandardType>GREEN_AREA</com.pc.plumbit.enums.StandardType>
-    <com.pc.plumbit.model.StandardValues>
-      <value>1235</value>
-      <round>true</round>
-      <description></description>
-    </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-    <com.pc.plumbit.enums.StandardType>PAVED_AREA</com.pc.plumbit.enums.StandardType>
-    <com.pc.plumbit.model.StandardValues>
-      <value>3526.00</value>
+      <value>60</value>
       <round>false</round>
-      <description></description>
+      <description>percentage</description>
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>TOTAL_PLOT_AREA</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>SOLID_WASTE_WET_GARBAGE</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
-      <value>8975.00</value>
+      <value>40</value>
       <round>false</round>
-      <description></description>
+      <description>percentage</description>
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>EXTRA_AREA_TO_BE_CATERED</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>WATER_DEMAND_COMMERTIAL</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
-      <value>0.0</value>
+      <value>45.0</value>
+      <round>true</round>
+      <description>lpcd</description>
+    </com.pc.plumbit.model.StandardValues>
+  </entry>
+  <entry>
+    <com.pc.plumbit.enums.StandardType>SOLID_WASTE_KG_PERSON_DAY_COMMERTIAL</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.model.StandardValues>
+      <value>0.2</value>
       <round>false</round>
-      <description></description>
+      <description>kg/person/day</description>
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>HEIGHT_OF_TALLEST_BUILDING_FROM_GR</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>GAS_BANK_COMMERTIAL</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
-      <value>117.5</value>
+      <value>0.5</value>
       <round>false</round>
-      <description></description>
+      <description>kg/flat/day</description>
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>BASEMENT_AREA</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>SOLAR_COMMERTIAL</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
-      <value>6302</value>
+      <value>0</value>
       <round>true</round>
-      <description></description>
+      <description>lpcd</description>
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>RESIDUAL_HEAD_PLUMBING</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>SOLID_WASTE_DRY_GARBAGE_COMMERTIAL</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
-      <value>10</value>
-      <round>true</round>
-      <description></description>
+      <value>60</value>
+      <round>false</round>
+      <description>percentage</description>
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>RESIDUAL_HEAD_FIRE</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>SOLID_WASTE_WET_GARBAGE_COMMERTIAL</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
-      <value>35</value>
-      <round>true</round>
-      <description></description>
+      <value>40</value>
+      <round>false</round>
+      <description>percentage</description>
     </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-    <com.pc.plumbit.enums.StandardType>FRICTION_LOSS</com.pc.plumbit.enums.StandardType>
-    <com.pc.plumbit.model.StandardValues>
-      <value>35</value>
-      <round>true</round>
-      <description>%</description>
-    </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-    <com.pc.plumbit.enums.StandardType>FLOW_TO_SEWER_DOM</com.pc.plumbit.enums.StandardType>
-    <com.pc.plumbit.model.StandardValues>
-      <value>90</value>
-      <round>true</round>
-      <description>%</description>
-    </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-    <com.pc.plumbit.enums.StandardType>FLOW_TO_SEWER_FLS</com.pc.plumbit.enums.StandardType>
-    <com.pc.plumbit.model.StandardValues>
-      <value>100</value>
-      <round>true</round>
-      <description>%</description>
-    </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-    <com.pc.plumbit.enums.StandardType>RAW_WATER_TANK</com.pc.plumbit.enums.StandardType>
-    <com.pc.plumbit.model.StandardValues>
-      <value>50</value>
-      <round>true</round>
-      <description>%</description>
-    </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-    <com.pc.plumbit.enums.StandardType>DOMESTIC_TANK</com.pc.plumbit.enums.StandardType>
-    <com.pc.plumbit.model.StandardValues>
-      <value>50</value>
-      <round>true</round>
-      <description>%</description>
-    </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-    <com.pc.plumbit.enums.StandardType>STP_FLUSHING_TANK</com.pc.plumbit.enums.StandardType>
-    <com.pc.plumbit.model.StandardValues>
-      <value>1</value>
-      <round>true</round>
-      <description>in days</description>
-    </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-	<com.pc.plumbit.enums.StandardType>OHT_FIRE_FIGHTING_TANK</com.pc.plumbit.enums.StandardType>
-    <com.pc.plumbit.model.StandardValues>
-      <value>10000</value>
-      <round>true</round>
-      <description>as per NBC</description>
-    </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-	<com.pc.plumbit.enums.StandardType>UGR_FIRE_FIGHTING_TANK</com.pc.plumbit.enums.StandardType>
-    <com.pc.plumbit.model.StandardValues>
-      <value>200000</value>
-      <round>true</round>
-      <description>as per previous project experience</description>
-    </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-	<com.pc.plumbit.enums.StandardType>LANDSCAPE_AREA_WATER_PERCENTAGE</com.pc.plumbit.enums.StandardType>
-    <com.pc.plumbit.model.StandardValues>
-      <value>5</value>
-      <round>true</round>
-      <description>lit per  sq.m of green area</description>
-    </com.pc.plumbit.model.StandardValues>
-  </entry>
-  <entry>
-	<com.pc.plumbit.enums.StandardType>SWIMMING_POOL_AREA_PERCENT</com.pc.plumbit.enums.StandardType>
-	<com.pc.plumbit.model.StandardValues>
-	  <value>5</value>
-	  <round>true</round>
-	  <description>% of Pool Capacity</description>
-	</com.pc.plumbit.model.StandardValues>
   </entry>
 </map>

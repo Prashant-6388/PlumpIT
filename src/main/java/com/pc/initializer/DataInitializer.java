@@ -38,7 +38,9 @@ public class DataInitializer {
         xstream = new XStream(new DomDriver());
         xstream.allowTypesByWildcard(new String[] {
             "com.pc.plumbit.model.*",
-            "com.pc.plumbit.enums.*"                
+            "com.pc.plumbit.enums.*",
+            "com.pc.plumbit.model.input.*",
+            "com.pc.plumbit.model.input.capacity*"
         });
     }
 

@@ -8,19 +8,29 @@ import com.pc.plumbit.enums.StandardType;
 import com.pc.exceptions.InvalidInputException;
 import com.pc.initializer.DataInitializer;
 import com.pc.plumbit.generator.PDFGenerator;
+import com.pc.plumbit.model.input.OfficeData;
 import com.pc.plumbit.model.PdfData;
 import com.pc.plumbit.model.StandardValues;
-import com.pc.plumbit.model.TowerData;
+import com.pc.plumbit.model.input.CapacityDetails;
+import com.pc.plumbit.model.input.FireFightingDetails;
+import com.pc.plumbit.model.input.PlotArea;
+import com.pc.plumbit.model.input.TowerData;
+import com.pc.plumbit.model.input.capacity.OHTCapacity;
+import com.pc.plumbit.model.input.capacity.STPCapacity;
+import com.pc.plumbit.model.input.capacity.UGTCapacity;
 import com.pc.utils.DataFormater;
+import com.pc.utils.DataUtils;
 import com.pc.utils.StyleFormatter;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.StreamException;
 import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.HeadlessException;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -35,6 +45,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,11 +54,11 @@ import org.slf4j.LoggerFactory;
  *
  * @author Prashant
  */
-public class DataCalculator extends javax.swing.JFrame {
+public class DataCalculator extends javax.swing.JFrame implements SaveListener {
 
     private static final Logger log = LoggerFactory.getLogger(DataCalculator.class);
     private List<TowerData> towersList = new ArrayList<>();
-    private List<TreeMap<StandardType,Integer>> officesList = new ArrayList<>();
+    private List<OfficeData> officesList = new ArrayList<>();
     private TreeMap<StandardType,Integer> outsideAreaMap = new TreeMap<>();
     private HashMap<StandardType, StandardValues> standardValMap;
     private DefaultTableModel dtm;
@@ -60,6 +71,12 @@ public class DataCalculator extends javax.swing.JFrame {
     private List<String> towerNameList = new ArrayList<>();
     private List<List<String>> groupedTowerNamesList = new ArrayList<>();
     public static Font baseFont = new Font("Segoe UI", Font.PLAIN, 12);
+    private SaveListener saveListener;
+    private CapacityDetails capacityDetailsResidential;
+    private CapacityDetails capacityDetailsCommertial;
+    private FireFightingDetails fireFightingDetails;
+    private PlotArea plotArea;
+
     /**
      * Creates new form DataCalculator
      */
@@ -67,64 +84,37 @@ public class DataCalculator extends javax.swing.JFrame {
         initApp();
     }
     
-    private void initApp(){
+    private void initApp() {
         initComponents();
         initConfigs();
         initTowerTable();
         initOfficeTable();
-        officePanel.setVisible(false);
+        officeShowroomPanel.setVisible(false);
         residentialPanel.setVisible(true);
         tabbedPane.setEnabledAt(1, false);
         tabbedPane.setEnabledAt(2, false);
         
-        dtmOfficeOverview.addColumn("<html><b>Offices</b></html>");
-        dtmOfficeOverview.addColumn("<html><b>Showroom</b></html>");
         officeDataOverviewTable.setModel(dtmOfficeOverview);
-        
-        DataInitializer.setTableStyling(towerDataOveriewTable);
-        dtmTowerDataOverview.addColumn("<html><b>Name</b></html>");
-        dtmTowerDataOverview.addColumn("<html><b>1 BHK</b></html>");
-        dtmTowerDataOverview.addColumn("<html><b>2 BHK</b></html>");
-        dtmTowerDataOverview.addColumn("<html><b>2.5 BHK</b></html>");
-        dtmTowerDataOverview.addColumn("<html><b>3 BHK</b></html>");
-        dtmTowerDataOverview.addColumn("<html><b>3.5 BHK</b></html>");
-        dtmTowerDataOverview.addColumn("<html><b>4 BHK</b></html>");
-        dtmTowerDataOverview.addColumn("<html><b>4.5 BHK</b></html>");
-        dtmTowerDataOverview.addColumn("<html><b>Studio</b></html>");
         towerDataOveriewTable.setModel(dtmTowerDataOverview);
+        DataInitializer.setTableStyling(towerDataOveriewTable);
+        DataInitializer.setTableStyling(officeDataOverviewTable);
         
-        peopertTypeSelector.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                JComboBox cb = (JComboBox) e.getSource();
-                String type = (String) cb.getSelectedItem();
-                System.out.println("type : " + type);
-                if(type.equals(TYPE_RESIDENTIAL)) {
-                    officePanel.setVisible(false);
-                    residentialPanel.setVisible(true);
-                } else {
-                    residentialPanel.setVisible(false);
-                    officePanel.setVisible(true);
-                }
-            }
-        });
-        try {
-            URL imageUrl = DataCalculator.class.getResource("/images/saveBtnIcon2.png");
-            ImageIcon icon = new ImageIcon(imageUrl);
-            saveProjectBtn.setIcon(icon);
-            saveProjectBtn.setText("");
-        } catch (Exception e) {
-            log.error("save button icon failed "+e.getMessage());
-        }
+        initTowerDataOverview();
+        initOfficeDataOverview();
+        initPanelSelector();
+        initButtons();
+        
         towerGroupPanel.setLayout(new GridLayout(20,1));
         DataInitializer.setTableStyling(towerGroupTable);
         
         StyleFormatter.setTableColumnAlignment(towerDataTable, JLabel.CENTER, true);
-        StyleFormatter.setTableColumnAlignment(officeDataTable, JLabel.CENTER, true);
+        StyleFormatter.setTableColumnAlignment(officeDataTable, SwingConstants.LEFT, true);
         StyleFormatter.setTableColumnAlignment(towerGroupTable, JLabel.CENTER, true);
     }
     
     public DataCalculator(PdfData projectData) {
         initApp();
+        modifyStdVals.setEnabled(false);
         setStandardValues(projectData.getStandardValMap());
         
         this.towersList = projectData.getTowersList();
@@ -134,8 +124,8 @@ public class DataCalculator extends javax.swing.JFrame {
         }
 
         this.officesList = projectData.getOfficesList();
-        for(TreeMap<StandardType,Integer> officeMap : officesList){
-            addOfficeDataRow(officeMap);
+        for(OfficeData officeData : officesList){
+            addOfficeDataRow(officeData);
         }
         
         this.outsideAreaMap = projectData.getOutsideAreaMap();
@@ -148,6 +138,8 @@ public class DataCalculator extends javax.swing.JFrame {
         for(List<String> groupedTowers : groupedTowerNames) {
             addGroupedTowerRow(groupedTowers);
         }
+        
+        setOtherInputs(projectData);
                 
         createOverview();
         projectNameInput.setText(projectData.getProjectName());
@@ -176,14 +168,20 @@ public class DataCalculator extends javax.swing.JFrame {
     private void initOfficeTable() {
         //String[] tableHeaders= {"2 BHK, 3 BHK, 3.5 BHK, 4 BHK"};
         dtmOffice = new DefaultTableModel(0, 0);
-        dtmOffice.addColumn("<html><b>Office</b></html>");
-        dtmOffice.addColumn("<html><b>Showroom</b></html>");
-        dtmOffice.addColumn("<html><b>  </b></html>");
+        dtmOffice.addColumn("<html><div style='height:25px'><b>Sr. No</b></div></html>");
+        dtmOffice.addColumn("<html><div style='height:25px'><b>Floor Nr</b></div></html>");
+        dtmOffice.addColumn("<html><div style='height:25px'><b>Type of Area</b></div></html>");
+        dtmOffice.addColumn("<html><div style='height:25px'><b>Area</b></div></html>");
+        dtmOffice.addColumn("<html><div style='height:25px'><b>No of floors</b></div></html>");
+        dtmOffice.addColumn("<html><div style='height:25px'><b>Sq. Mtr. Per Person </b></div></html>");
+        dtmOffice.addColumn("<html><div style='height:25px'><b>No. of Shifts</b></div></html>");
+        dtmOffice.addColumn("<html><div style='height:25px'><b></b></html>");
         officeDataTable.setModel(dtmOffice);
         officeDataTable.setDefaultEditor(Object.class, null);
         DataInitializer.setTableStyling(towerDataTable);
         
     }
+    
     private void initConfigs() {
         updateStandardFieldEditiability(false);
         readAndSetStandardValues();
@@ -197,7 +195,6 @@ public class DataCalculator extends javax.swing.JFrame {
             log.error("unable to read standard value config : ", ex);
             int continueWithoutStandardVals = JOptionPane.showConfirmDialog(this, "Unable to read Standard values \n Do you want to continue?", 
                     "Error", JOptionPane.YES_NO_OPTION);
-            System.out.println("continueWithoutStandardVals : "+continueWithoutStandardVals);
             if (continueWithoutStandardVals == 0) {
                 updateStandardFieldEditiability(true);
             } else {
@@ -224,36 +221,26 @@ public class DataCalculator extends javax.swing.JFrame {
         peoplePerSwimmingPoolInput.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SWIMMING_POOL)));
         peoplePerClubHouseInput.setText(DataFormater.getStandardValue(standardValues.get(StandardType.CLUB_HOUSE)));
 
-        stdwaterDemand.setText(DataFormater.getStandardValue(standardValues.get(StandardType.WATER_DEMAND)));
-        stdSolidWasteKgPPD.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_KG_PERSON_DAY)));
-        stdSolidWasteLtrPerFamily.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_LITER_20_FAMILY)));
-        stdGasBank.setText(DataFormater.getStandardValue(standardValues.get(StandardType.GAS_BANK)));
-        stdSolar.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLAR)));
-
-        stdTerrace.setText(DataFormater.getStandardValue(standardValues.get(StandardType.TERRACE)));
-        stdGreenArea.setText(DataFormater.getStandardValue(standardValues.get(StandardType.GREEN_AREA)));
-        stdPavedArea.setText(DataFormater.getStandardValue(standardValues.get(StandardType.PAVED_AREA)));
-        stdTotalPlotArea.setText(DataFormater.getStandardValue(standardValues.get(StandardType.TOTAL_PLOT_AREA)));
-        stdExtraAreaCatered.setText(DataFormater.getStandardValue(standardValues.get(StandardType.EXTRA_AREA_TO_BE_CATERED)));
-
-        stdHeightOfTallestBld.setText(DataFormater.getStandardValue(standardValues.get(StandardType.HEIGHT_OF_TALLEST_BUILDING_FROM_GR)));
-        stdBasementArea.setText(DataFormater.getStandardValue(standardValues.get(StandardType.BASEMENT_AREA)));
-        stdResidualHeadPlumbing.setText(DataFormater.getStandardValue(standardValues.get(StandardType.RESIDUAL_HEAD_PLUMBING)));
-        stdResidualHeadFire.setText(DataFormater.getStandardValue(standardValues.get(StandardType.RESIDUAL_HEAD_FIRE)));
-        stdFrictionLossInput.setText(DataFormater.getStandardValue(standardValues.get(StandardType.FRICTION_LOSS)));
-        
-        domesticSewerPercent.setText(DataFormater.getStandardValue(standardValues.get(StandardType.FLOW_TO_SEWER_DOM)));
-        flushSewerPercent.setText(DataFormater.getStandardValue(standardValues.get(StandardType.FLOW_TO_SEWER_FLS)));
-        rawWaterTankPercent.setText(DataFormater.getStandardValue(standardValues.get(StandardType.RAW_WATER_TANK)));
-        domesticWaterTankPercent.setText(DataFormater.getStandardValue(standardValues.get(StandardType.DOMESTIC_TANK)));
-        stpFlushingTank.setText(DataFormater.getStandardValue(standardValues.get(StandardType.STP_FLUSHING_TANK)));
-        
-        ohtFireFightingTank.setText(DataFormater.getStandardValue(standardValues.get(StandardType.OHT_FIRE_FIGHTING_TANK)));
-        ugrFireFightingTank.setText(DataFormater.getStandardValue(standardValues.get(StandardType.UGR_FIRE_FIGHTING_TANK)));
-        
         landscapeAreaWater.setSelectedItem(DataFormater.getStandardValue(standardValues.get(StandardType.LANDSCAPE_AREA_WATER_PERCENTAGE)));
         swimmingPoolCapacity.setSelectedItem(DataFormater.getStandardValue(standardValues.get(StandardType.SWIMMING_POOL_AREA_PERCENT)));
 
+        sqMtrPerPersonOfficeInput.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SQ_MTR_PER_PERSON_OFFICE)));
+        sqMtrPerPersonAtGroundInput.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SQ_MTR_PER_PERSON_AT_GROUND)));
+        sqMtrPerPersonAboveGroundInput.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SQ_MTR_PER_PERSON_ABOVE_GROUND)));
+        
+        stdwaterDemand.setText(DataFormater.getStandardValue(standardValues.get(StandardType.WATER_DEMAND)));
+        stdSolidWasteKgPPD.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_KG_PERSON_DAY)));
+        stdGasBank.setText(DataFormater.getStandardValue(standardValues.get(StandardType.GAS_BANK)));
+        stdSolar.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLAR)));
+        dryGarbageInput.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_DRY_GARBAGE)));
+        wetGarbageInput.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_WET_GARBAGE)));
+        
+        stdwaterDemandCommertial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.WATER_DEMAND_COMMERTIAL)));
+        stdSolidWasteKgPPCommertial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_KG_PERSON_DAY_COMMERTIAL)));
+        stdGasBankCommertial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.GAS_BANK_COMMERTIAL)));
+        stdSolarCommertial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLAR_COMMERTIAL)));
+        dryGarbageInputCommertial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_DRY_GARBAGE_COMMERTIAL)));
+        wetGarbageInputCommertial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_WET_GARBAGE_COMMERTIAL)));
     }
     
     private void updateStandardFieldEditiability(boolean allowEdit){
@@ -272,32 +259,24 @@ public class DataCalculator extends javax.swing.JFrame {
         peoplePerSwimmingPoolInput.setEditable(allowEdit);
         peoplePerClubHouseInput.setEditable(allowEdit);
         
+        sqMtrPerPersonOfficeInput.setEditable(allowEdit);
+        sqMtrPerPersonAtGroundInput.setEditable(allowEdit);
+        sqMtrPerPersonAboveGroundInput.setEditable(allowEdit);
+        
         stdwaterDemand.setEditable(allowEdit);
         stdSolidWasteKgPPD.setEditable(allowEdit);
-        stdSolidWasteLtrPerFamily.setEditable(allowEdit);
         stdGasBank.setEditable(allowEdit);
         stdSolar.setEditable(allowEdit);
+        dryGarbageInput.setEditable(allowEdit);
+        wetGarbageInput.setEditable(allowEdit);
         
-        stdTerrace.setEditable(allowEdit);
-        stdGreenArea.setEditable(allowEdit);
-        stdPavedArea.setEditable(allowEdit);
-        stdTotalPlotArea.setEditable(allowEdit);
-        stdExtraAreaCatered.setEditable(allowEdit);
+        stdwaterDemandCommertial.setEditable(allowEdit);
+        stdSolidWasteKgPPCommertial.setEditable(allowEdit);
+        stdGasBankCommertial.setEditable(allowEdit);
+        stdSolarCommertial.setEditable(allowEdit);
+        dryGarbageInputCommertial.setEditable(allowEdit);
+        wetGarbageInputCommertial.setEditable(allowEdit);
         
-        stdHeightOfTallestBld.setEditable(allowEdit);
-        stdBasementArea.setEditable(allowEdit);
-        stdResidualHeadPlumbing.setEditable(allowEdit);
-        stdResidualHeadFire.setEditable(allowEdit);
-        stdFrictionLossInput.setEditable(allowEdit);
-        
-        domesticSewerPercent.setEditable(allowEdit);
-        flushSewerPercent.setEditable(allowEdit);
-        rawWaterTankPercent.setEditable(allowEdit);
-        domesticWaterTankPercent.setEditable(allowEdit);
-        stpFlushingTank.setEditable(allowEdit);
-        
-        ugrFireFightingTank.setEditable(allowEdit);
-        ohtFireFightingTank.setEditable(allowEdit);
     }
     
     /**
@@ -344,7 +323,6 @@ public class DataCalculator extends javax.swing.JFrame {
         peoplePerClubHouseInput = new javax.swing.JTextField();
         consumptionParamPanel = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
         jLabel48 = new javax.swing.JLabel();
         jLabel49 = new javax.swing.JLabel();
         stdwaterDemand = new javax.swing.JTextField();
@@ -353,50 +331,36 @@ public class DataCalculator extends javax.swing.JFrame {
         stdGasBank = new javax.swing.JTextField();
         jLabel50 = new javax.swing.JLabel();
         jLabel64 = new javax.swing.JLabel();
-        stdSolidWasteLtrPerFamily = new javax.swing.JTextField();
+        jLabel91 = new javax.swing.JLabel();
+        dryGarbageInput = new javax.swing.JTextField();
+        jLabel92 = new javax.swing.JLabel();
+        wetGarbageInput = new javax.swing.JTextField();
         inputCriteriaTabNextBtn = new javax.swing.JButton();
-        jCheckBox1 = new javax.swing.JCheckBox();
-        jPanel2 = new javax.swing.JPanel();
-        jLabel51 = new javax.swing.JLabel();
-        jLabel52 = new javax.swing.JLabel();
-        stdTerrace = new javax.swing.JTextField();
-        jLabel54 = new javax.swing.JLabel();
-        stdGreenArea = new javax.swing.JTextField();
-        jLabel55 = new javax.swing.JLabel();
-        stdPavedArea = new javax.swing.JTextField();
-        jLabel56 = new javax.swing.JLabel();
-        stdTotalPlotArea = new javax.swing.JTextField();
-        jLabel57 = new javax.swing.JLabel();
-        stdExtraAreaCatered = new javax.swing.JTextField();
-        jPanel3 = new javax.swing.JPanel();
-        jLabel59 = new javax.swing.JLabel();
-        stdHeightOfTallestBld = new javax.swing.JTextField();
-        stdResidualHeadPlumbing = new javax.swing.JTextField();
-        jLabel60 = new javax.swing.JLabel();
-        stdBasementArea = new javax.swing.JTextField();
-        jLabel61 = new javax.swing.JLabel();
-        stdFrictionLossInput = new javax.swing.JTextField();
-        jLabel63 = new javax.swing.JLabel();
-        stdResidualHeadFire = new javax.swing.JTextField();
-        jLableStdFrictionLoss = new javax.swing.JLabel();
-        jLabel58 = new javax.swing.JLabel();
-        jPanel7 = new javax.swing.JPanel();
-        jLabel71 = new javax.swing.JLabel();
-        jLabel72 = new javax.swing.JLabel();
-        domesticSewerPercent = new javax.swing.JTextField();
-        jLabel73 = new javax.swing.JLabel();
-        flushSewerPercent = new javax.swing.JTextField();
-        jLabel74 = new javax.swing.JLabel();
-        rawWaterTankPercent = new javax.swing.JTextField();
-        jLabel75 = new javax.swing.JLabel();
-        domesticWaterTankPercent = new javax.swing.JTextField();
-        jLabel76 = new javax.swing.JLabel();
-        stpFlushingTank = new javax.swing.JTextField();
-        jLabel79 = new javax.swing.JLabel();
-        ugrFireFightingTank = new javax.swing.JTextField();
-        jLabel80 = new javax.swing.JLabel();
-        ohtFireFightingTank = new javax.swing.JTextField();
+        modifyStdVals = new javax.swing.JCheckBox();
+        jPanel10 = new javax.swing.JPanel();
+        jLabel87 = new javax.swing.JLabel();
+        sqMtrPerPersonOfficeInput = new javax.swing.JTextField();
+        jLabel86 = new javax.swing.JLabel();
+        sqMtrPerPersonAtGroundInput = new javax.swing.JTextField();
+        jLabel89 = new javax.swing.JLabel();
+        sqMtrPerPersonAboveGroundInput = new javax.swing.JTextField();
+        jLabel81 = new javax.swing.JLabel();
+        consumptionParamPanel1 = new javax.swing.JPanel();
+        jLabel27 = new javax.swing.JLabel();
+        jLabel94 = new javax.swing.JLabel();
+        jLabel95 = new javax.swing.JLabel();
+        stdwaterDemandCommertial = new javax.swing.JTextField();
+        stdSolidWasteKgPPCommertial = new javax.swing.JTextField();
+        stdSolarCommertial = new javax.swing.JTextField();
+        stdGasBankCommertial = new javax.swing.JTextField();
+        jLabel96 = new javax.swing.JLabel();
+        jLabel97 = new javax.swing.JLabel();
+        jLabel98 = new javax.swing.JLabel();
+        dryGarbageInputCommertial = new javax.swing.JTextField();
+        jLabel99 = new javax.swing.JLabel();
+        wetGarbageInputCommertial = new javax.swing.JTextField();
         inputDataPanel = new javax.swing.JPanel();
+        jScrollPane2 = new javax.swing.JScrollPane();
         mainPanel = new javax.swing.JPanel();
         peopertTypeSelector = new javax.swing.JComboBox<>();
         outsideAreaPanel = new javax.swing.JPanel();
@@ -414,12 +378,6 @@ public class DataCalculator extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         towerDataTable = new javax.swing.JTable();
         typePanel = new javax.swing.JPanel();
-        officePanel = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
-        nrOffice = new javax.swing.JTextField();
-        addOfficeDataBtn = new javax.swing.JButton();
-        jLabel2 = new javax.swing.JLabel();
-        nrShowroom = new javax.swing.JTextField();
         residentialPanel = new javax.swing.JPanel();
         jLabel40 = new javax.swing.JLabel();
         nrFlats1BHKInput = new javax.swing.JTextField();
@@ -442,6 +400,20 @@ public class DataCalculator extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         jLabel62 = new javax.swing.JLabel();
         towerNameInput = new javax.swing.JTextField();
+        officeShowroomPanel = new javax.swing.JPanel();
+        jLabel82 = new javax.swing.JLabel();
+        jLabel25 = new javax.swing.JLabel();
+        jLabel26 = new javax.swing.JLabel();
+        officeFloorNrInput = new javax.swing.JTextField();
+        jLabel83 = new javax.swing.JLabel();
+        officeAreaInput = new javax.swing.JTextField();
+        jLabel84 = new javax.swing.JLabel();
+        jLabel85 = new javax.swing.JLabel();
+        jLabel88 = new javax.swing.JLabel();
+        nrOfShiftsInput = new javax.swing.JTextField();
+        jButton1 = new javax.swing.JButton();
+        officeType = new javax.swing.JComboBox<>();
+        nrFloorInput = new javax.swing.JComboBox<>();
         inputDataNextBtn = new javax.swing.JButton();
         jScrollPane4 = new javax.swing.JScrollPane();
         officeDataTable = new javax.swing.JTable();
@@ -452,6 +424,82 @@ public class DataCalculator extends javax.swing.JFrame {
         towerGroupScrollPane = new javax.swing.JScrollPane();
         towerGroupPanel = new javax.swing.JPanel();
         clearGroupedTowerBtn = new javax.swing.JButton();
+        jPanel2 = new javax.swing.JPanel();
+        jLabel51 = new javax.swing.JLabel();
+        jLabel52 = new javax.swing.JLabel();
+        terraceArea = new javax.swing.JTextField();
+        jLabel54 = new javax.swing.JLabel();
+        greenArea = new javax.swing.JTextField();
+        jLabel55 = new javax.swing.JLabel();
+        pavedArea = new javax.swing.JTextField();
+        jLabel56 = new javax.swing.JLabel();
+        totalPlotArea = new javax.swing.JTextField();
+        jLabel57 = new javax.swing.JLabel();
+        extraAreaCatered = new javax.swing.JTextField();
+        jPanel3 = new javax.swing.JPanel();
+        jLabel59 = new javax.swing.JLabel();
+        heightOfTallestBld = new javax.swing.JTextField();
+        residualHeadPlumbing = new javax.swing.JTextField();
+        jLabel60 = new javax.swing.JLabel();
+        basementArea = new javax.swing.JTextField();
+        jLabel61 = new javax.swing.JLabel();
+        frictionLossInput = new javax.swing.JTextField();
+        jLabel63 = new javax.swing.JLabel();
+        residualHeadFire = new javax.swing.JTextField();
+        jLableStdFrictionLoss = new javax.swing.JLabel();
+        jLabel58 = new javax.swing.JLabel();
+        jPanel11 = new javax.swing.JPanel();
+        jLabel90 = new javax.swing.JLabel();
+        jPanel12 = new javax.swing.JPanel();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel106 = new javax.swing.JLabel();
+        ugtDomesticWaterTankPercent = new javax.swing.JTextField();
+        jLabel101 = new javax.swing.JLabel();
+        ugtRawWaterTankPercent = new javax.swing.JTextField();
+        jLabel104 = new javax.swing.JLabel();
+        ugtFireFightingTank = new javax.swing.JTextField();
+        jLabel103 = new javax.swing.JLabel();
+        ugtFlushingTank = new javax.swing.JTextField();
+        jPanel13 = new javax.swing.JPanel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel107 = new javax.swing.JLabel();
+        jLabel109 = new javax.swing.JLabel();
+        jLabel110 = new javax.swing.JLabel();
+        ohtFlushingTank = new javax.swing.JTextField();
+        ohtDomesticTankPercent = new javax.swing.JTextField();
+        ohtFireFightingTank = new javax.swing.JTextField();
+        jPanel14 = new javax.swing.JPanel();
+        jLabel4 = new javax.swing.JLabel();
+        jLabel93 = new javax.swing.JLabel();
+        domesticSewerPercent = new javax.swing.JTextField();
+        jLabel100 = new javax.swing.JLabel();
+        flushingSewerPercent = new javax.swing.JTextField();
+        jPanel15 = new javax.swing.JPanel();
+        jLabel102 = new javax.swing.JLabel();
+        jPanel16 = new javax.swing.JPanel();
+        jLabel28 = new javax.swing.JLabel();
+        jLabel108 = new javax.swing.JLabel();
+        ugtDomesticWaterTankPercentCommertial = new javax.swing.JTextField();
+        jLabel105 = new javax.swing.JLabel();
+        ugtRawWaterTankPercentCommertial = new javax.swing.JTextField();
+        jLabel111 = new javax.swing.JLabel();
+        ugtFireFightingTankCommertial = new javax.swing.JTextField();
+        jLabel112 = new javax.swing.JLabel();
+        ugtFlushingTankCommertial = new javax.swing.JTextField();
+        jPanel17 = new javax.swing.JPanel();
+        jLabel29 = new javax.swing.JLabel();
+        jLabel113 = new javax.swing.JLabel();
+        jLabel114 = new javax.swing.JLabel();
+        jLabel115 = new javax.swing.JLabel();
+        ohtFlushingTankCommertial = new javax.swing.JTextField();
+        ohtDomesticTankPercentCommertial = new javax.swing.JTextField();
+        ohtFireFightingTankCommertial = new javax.swing.JTextField();
+        jPanel18 = new javax.swing.JPanel();
+        jLabel30 = new javax.swing.JLabel();
+        jLabel116 = new javax.swing.JLabel();
+        domesticSewerPercentCommertial = new javax.swing.JTextField();
+        jLabel117 = new javax.swing.JLabel();
+        flushingSewerPercentCommertial = new javax.swing.JTextField();
         overviewPanel = new javax.swing.JPanel();
         populationCriteriaPanel = new javax.swing.JPanel();
         jLabel66 = new javax.swing.JLabel();
@@ -477,8 +525,11 @@ public class DataCalculator extends javax.swing.JFrame {
         saveProjectBtn = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+        setBackground(new java.awt.Color(203, 203, 255));
         setFont(new java.awt.Font("Segoe UI", 0, 12)); // NOI18N
         setResizable(false);
+
+        tabbedPane.setName(""); // NOI18N
 
         peoplePerTypeInputPanel.setMaximumSize(new java.awt.Dimension(20, 40));
         peoplePerTypeInputPanel.setMinimumSize(new java.awt.Dimension(20, 40));
@@ -487,7 +538,7 @@ public class DataCalculator extends javax.swing.JFrame {
         jLabel15.setBackground(new java.awt.Color(204, 255, 255));
         jLabel15.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel15.setForeground(new java.awt.Color(0, 0, 255));
-        jLabel15.setText("Population Criteria");
+        jLabel15.setText("Residential Population Criteria");
 
         jLabel13.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
         jLabel13.setText("1 BHK");
@@ -642,81 +693,73 @@ public class DataCalculator extends javax.swing.JFrame {
         peoplePerTypeInputPanelLayout.setHorizontalGroup(
             peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
+                .addGap(20, 20, 20)
                 .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(51, 51, 51)
-                        .addComponent(jLabel15))
+                        .addComponent(jLabel15)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(22, 22, 22)
-                        .addComponent(jLabel20, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(peopleServantInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(22, 22, 22)
-                        .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(peopleDriverInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(22, 22, 22)
-                        .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(peoplePerLandscapeInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(22, 22, 22)
-                        .addComponent(jLabel23, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(peoplePerSwimmingPoolInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(22, 22, 22)
-                        .addComponent(jLabel24, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(peoplePerClubHouseInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(20, 20, 20)
-                        .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(20, 20, 20)
-                        .addComponent(peoplePer1BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(20, 20, 20)
-                        .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(20, 20, 20)
-                        .addComponent(peoplePer2BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(20, 20, 20)
-                        .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(20, 20, 20)
-                        .addComponent(peoplePer2NHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(20, 20, 20)
-                        .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(20, 20, 20)
-                        .addComponent(peoplePer3BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(20, 20, 20)
-                        .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(20, 20, 20)
-                        .addComponent(peoplePer3AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(20, 20, 20)
-                        .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(20, 20, 20)
-                        .addComponent(peoplePer4BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(22, 22, 22)
-                        .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(peoplePer4AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(22, 22, 22)
-                        .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(peoplePerStudioInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
-                        .addGap(22, 22, 22)
-                        .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(peoplePODsInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(27, Short.MAX_VALUE))
+                        .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
+                                .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(peoplePer1BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(peoplePer2BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(peoplePer2NHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
+                                .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(peoplePODsInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel20, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(peopleServantInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 55, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(peopleDriverInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
+                                .addComponent(peoplePerLandscapeInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jLabel23, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(peoplePerSwimmingPoolInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
+                                .addComponent(peoplePer3BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(43, 43, 43)
+                                .addComponent(peoplePer3AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 8, Short.MAX_VALUE)
+                        .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel24, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, 0)
+                        .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(peoplePerTypeInputPanelLayout.createSequentialGroup()
+                                .addComponent(peoplePer4BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(peoplePer4AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(peoplePerStudioInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(peoplePerClubHouseInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addContainerGap(9, Short.MAX_VALUE))))
         );
         peoplePerTypeInputPanelLayout.setVerticalGroup(
             peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -725,144 +768,118 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addComponent(jLabel15)
                 .addGap(8, 8, 8)
                 .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peoplePer1BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(5, 5, 5)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peoplePer2BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(5, 5, 5)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peoplePer2NHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peoplePer3BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(5, 5, 5)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peoplePer3AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(5, 5, 5)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel16, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peoplePer4BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(5, 5, 5)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peoplePer4AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peoplePerStudioInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jLabel13, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(peoplePer1BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(peoplePer2BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel12, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(peoplePer2NHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel14, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(peoplePer3BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel10, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(peoplePer4BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel17, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(peoplePer4AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel18, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(peoplePerStudioInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(peoplePer3AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel19, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peoplePODsInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(peoplePODsInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel20, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peopleServantInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(peopleServantInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel21, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peopleDriverInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(peopleDriverInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel22, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peoplePerLandscapeInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(peoplePerLandscapeInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel23, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(peoplePerSwimmingPoolInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(6, 6, 6)
-                .addGroup(peoplePerTypeInputPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(peoplePerSwimmingPoolInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel24, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(peoplePerClubHouseInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(185, 185, 185))
+                .addGap(15, 15, 15))
         );
 
-        jLabel3.setText("WATER DEMAND");
+        jLabel3.setText("Water Demand");
 
-        jLabel4.setText("<html>SOLID WASTE (Liter/20 families)</html>");
+        jLabel48.setText("Gas Bank");
 
-        jLabel48.setText("GAS BANK");
-
-        jLabel49.setText("SOLAR ");
+        jLabel49.setText("Solar ");
 
         jLabel50.setBackground(new java.awt.Color(204, 255, 255));
         jLabel50.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
         jLabel50.setForeground(new java.awt.Color(0, 0, 255));
-        jLabel50.setText("CONSUMPTION PARAMETERS");
+        jLabel50.setText("Residential Consumption Parameter");
 
-        jLabel64.setText("SOLID WASTE(kg/p/d)");
+        jLabel64.setText("Solid Waste(kg/p/d)");
+
+        jLabel91.setText("<html>Dry Garbage</html>");
+
+        jLabel92.setText("<html>Wet Garbage</html>");
 
         javax.swing.GroupLayout consumptionParamPanelLayout = new javax.swing.GroupLayout(consumptionParamPanel);
         consumptionParamPanel.setLayout(consumptionParamPanelLayout);
         consumptionParamPanelLayout.setHorizontalGroup(
             consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(consumptionParamPanelLayout.createSequentialGroup()
+                .addGap(20, 20, 20)
+                .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(consumptionParamPanelLayout.createSequentialGroup()
+                        .addComponent(jLabel91, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(dryGarbageInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(consumptionParamPanelLayout.createSequentialGroup()
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(79, 79, 79)
+                        .addComponent(stdwaterDemand, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel50))
+                .addGap(18, 18, 18)
                 .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(consumptionParamPanelLayout.createSequentialGroup()
-                        .addGap(51, 51, 51)
-                        .addComponent(jLabel50))
-                    .addGroup(consumptionParamPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(stdwaterDemand, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(consumptionParamPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel64, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(stdSolidWasteKgPPD, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(consumptionParamPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                            .addComponent(jLabel48, javax.swing.GroupLayout.DEFAULT_SIZE, 139, Short.MAX_VALUE))
-                        .addGap(18, 18, 18)
-                        .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(stdSolidWasteLtrPerFamily, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(stdGasBank, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(consumptionParamPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jLabel49, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(stdSolar, javax.swing.GroupLayout.PREFERRED_SIZE, 86, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jLabel64, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel92, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(75, 75, 75)
+                .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(stdSolidWasteKgPPD, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(wetGarbageInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(14, 14, 14)
+                .addComponent(jLabel48, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(stdGasBank, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(36, 36, 36)
+                .addComponent(jLabel49)
+                .addGap(34, 34, 34)
+                .addComponent(stdSolar, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 229, Short.MAX_VALUE))
         );
         consumptionParamPanelLayout.setVerticalGroup(
             consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(consumptionParamPanelLayout.createSequentialGroup()
-                .addGap(6, 6, 6)
-                .addComponent(jLabel50)
-                .addGap(8, 8, 8)
                 .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(consumptionParamPanelLayout.createSequentialGroup()
-                        .addGap(4, 4, 4)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(stdwaterDemand, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(4, 4, 4)
-                .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(consumptionParamPanelLayout.createSequentialGroup()
-                        .addGap(2, 2, 2)
-                        .addComponent(jLabel64, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(stdSolidWasteKgPPD, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(5, 5, 5)
-                .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel50)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(stdwaterDemand, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel64, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel3)))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, consumptionParamPanelLayout.createSequentialGroup()
-                        .addComponent(stdSolidWasteLtrPerFamily, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(17, 17, 17)))
-                .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(stdGasBank, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel48, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addContainerGap()
+                        .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(stdSolidWasteKgPPD, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel48)
+                            .addComponent(stdGasBank, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel49)
+                            .addComponent(stdSolar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(stdSolar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel49, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(8, 8, 8))
+                    .addGroup(consumptionParamPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(dryGarbageInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel92, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(wetGarbageInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel91, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(14, Short.MAX_VALUE))
         );
 
         inputCriteriaTabNextBtn.setText("Next");
@@ -873,203 +890,144 @@ public class DataCalculator extends javax.swing.JFrame {
             }
         });
 
-        jCheckBox1.setText("Modify Standard Values");
-        jCheckBox1.setActionCommand("");
-        jCheckBox1.addActionListener(new java.awt.event.ActionListener() {
+        modifyStdVals.setText("Modify Standard Values");
+        modifyStdVals.setActionCommand("");
+        modifyStdVals.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jCheckBox1ActionPerformed(evt);
+                modifyStdValsActionPerformed(evt);
             }
         });
 
-        jLabel51.setBackground(new java.awt.Color(204, 255, 255));
-        jLabel51.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jLabel51.setForeground(new java.awt.Color(0, 0, 255));
-        jLabel51.setText("PLOT AREA( SQ.MTRS )");
+        jLabel87.setText("<html>Sq. Mtr. Per Person - Office</html>");
 
-        jLabel52.setText("TERRACE");
+        jLabel86.setText("<html>Sq. Mtr. Per Person at Ground</html>");
 
-        jLabel54.setText("GREEN AREA");
+        jLabel89.setText("<html>Sq. Mtr. Per Person above Ground</html>");
 
-        jLabel55.setText("PAVED AREA");
+        jLabel81.setBackground(new java.awt.Color(204, 255, 255));
+        jLabel81.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel81.setForeground(new java.awt.Color(0, 0, 255));
+        jLabel81.setText("Commertial Population Criteria");
 
-        jLabel56.setText("TOTAL PLOT AREA");
-
-        jLabel57.setText("<html>EXTRA AREA TO BE CATERED</html>");
-
-        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
-        jPanel2.setLayout(jPanel2Layout);
-        jPanel2Layout.setHorizontalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel57, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 122, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel55, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel56, javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel54, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel52, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(33, 33, 33)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(stdExtraAreaCatered, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(stdTerrace, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(stdGreenArea, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(stdPavedArea, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(stdTotalPlotArea, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(jLabel51)
-                .addGap(45, 45, 45))
+        javax.swing.GroupLayout jPanel10Layout = new javax.swing.GroupLayout(jPanel10);
+        jPanel10.setLayout(jPanel10Layout);
+        jPanel10Layout.setHorizontalGroup(
+            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel10Layout.createSequentialGroup()
+                .addGap(16, 16, 16)
+                .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel81, javax.swing.GroupLayout.PREFERRED_SIZE, 186, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(jPanel10Layout.createSequentialGroup()
+                        .addComponent(jLabel87, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(28, 28, 28)
+                        .addComponent(sqMtrPerPersonOfficeInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel86, javax.swing.GroupLayout.PREFERRED_SIZE, 175, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(38, 38, 38)
+                        .addComponent(sqMtrPerPersonAtGroundInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel89, javax.swing.GroupLayout.PREFERRED_SIZE, 192, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(40, 40, 40)
+                        .addComponent(sqMtrPerPersonAboveGroundInput, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(119, Short.MAX_VALUE))
         );
-        jPanel2Layout.setVerticalGroup(
-            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel2Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel51)
+        jPanel10Layout.setVerticalGroup(
+            jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel10Layout.createSequentialGroup()
+                .addComponent(jLabel81, javax.swing.GroupLayout.PREFERRED_SIZE, 16, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel52)
-                    .addComponent(stdTerrace, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel54)
-                    .addComponent(stdGreenArea, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel55)
-                    .addComponent(stdPavedArea, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel56)
-                    .addComponent(stdTotalPlotArea, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel57, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(stdExtraAreaCatered, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(jPanel10Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(sqMtrPerPersonOfficeInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel87)
+                    .addComponent(jLabel86, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sqMtrPerPersonAtGroundInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(sqMtrPerPersonAboveGroundInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel89, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(14, 14, 14))
         );
 
-        jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+        jLabel27.setText("Water Demand");
 
-        jLabel59.setText("<html>HEIGHT OF TALLEST BUILDING FROM GR</html>");
-        jPanel3.add(jLabel59, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 20, 170, 40));
-        jPanel3.add(stdHeightOfTallestBld, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 30, 87, 33));
-        jPanel3.add(stdResidualHeadPlumbing, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 100, 87, -1));
+        jLabel94.setText("Gas Bank");
 
-        jLabel60.setText("<html>BASEMENT AREA</html>");
-        jPanel3.add(jLabel60, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 70, 170, 33));
-        jPanel3.add(stdBasementArea, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 70, 87, -1));
+        jLabel95.setText("Solar ");
 
-        jLabel61.setText("<html>RESIDUAL HEAD (PLUMBING)</html>");
-        jPanel3.add(jLabel61, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 100, 170, 30));
-        jPanel3.add(stdFrictionLossInput, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 160, 87, -1));
+        jLabel96.setBackground(new java.awt.Color(204, 255, 255));
+        jLabel96.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel96.setForeground(new java.awt.Color(0, 0, 255));
+        jLabel96.setText("Commertial Consumption Parameter");
 
-        jLabel63.setText("<html>RESIDUAL HEAD (FIRE)</html>");
-        jPanel3.add(jLabel63, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 130, 170, 22));
-        jPanel3.add(stdResidualHeadFire, new org.netbeans.lib.awtextra.AbsoluteConstraints(210, 130, 87, -1));
+        jLabel97.setText("Solid Waste(kg/p/d)");
 
-        jLableStdFrictionLoss.setText("FRICTION LOSS");
-        jPanel3.add(jLableStdFrictionLoss, new org.netbeans.lib.awtextra.AbsoluteConstraints(20, 160, 170, 22));
+        jLabel98.setText("<html>Dry Garbage</html>");
 
-        jLabel58.setBackground(new java.awt.Color(204, 255, 255));
-        jLabel58.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jLabel58.setForeground(new java.awt.Color(0, 0, 255));
-        jLabel58.setText("DESIGN CRITERIA FOR FIRE FIGHTING");
-        jPanel3.add(jLabel58, new org.netbeans.lib.awtextra.AbsoluteConstraints(51, 6, -1, -1));
+        jLabel99.setText("<html>Wet Garbage</html>");
 
-        jLabel71.setBackground(new java.awt.Color(204, 255, 255));
-        jLabel71.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
-        jLabel71.setForeground(new java.awt.Color(0, 0, 255));
-        jLabel71.setText("Others");
-
-        jLabel72.setText("Domestic Sewer %");
-
-        jLabel73.setText("Flush Sewer %");
-
-        jLabel74.setText("RAW WATER TANK %");
-
-        jLabel75.setText("OHT DOMESTIC TANK %");
-
-        jLabel76.setText("FLUSHING TANK (days)");
-
-        jLabel79.setText("UGR FIRE FIGHTING TANK");
-
-        jLabel80.setText("OHT FIRE FIGHTING TANK");
-
-        javax.swing.GroupLayout jPanel7Layout = new javax.swing.GroupLayout(jPanel7);
-        jPanel7.setLayout(jPanel7Layout);
-        jPanel7Layout.setHorizontalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel7Layout.createSequentialGroup()
-                .addGap(77, 77, 77)
-                .addComponent(jLabel71, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(48, Short.MAX_VALUE))
-            .addGroup(jPanel7Layout.createSequentialGroup()
-                .addGap(23, 23, 23)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel7Layout.createSequentialGroup()
-                        .addComponent(jLabel80, javax.swing.GroupLayout.PREFERRED_SIZE, 176, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(ohtFireFightingTank, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(jPanel7Layout.createSequentialGroup()
-                        .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addGroup(jPanel7Layout.createSequentialGroup()
-                                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(jLabel76, javax.swing.GroupLayout.DEFAULT_SIZE, 147, Short.MAX_VALUE)
-                                    .addComponent(jLabel72, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(jLabel73, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(jLabel75, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                    .addComponent(jLabel74, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        javax.swing.GroupLayout consumptionParamPanel1Layout = new javax.swing.GroupLayout(consumptionParamPanel1);
+        consumptionParamPanel1.setLayout(consumptionParamPanel1Layout);
+        consumptionParamPanel1Layout.setHorizontalGroup(
+            consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
+                .addGap(20, 20, 20)
+                .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
+                        .addComponent(jLabel96)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, consumptionParamPanel1Layout.createSequentialGroup()
+                        .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
+                                .addComponent(jLabel27, javax.swing.GroupLayout.PREFERRED_SIZE, 106, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(80, 80, 80)
+                                .addComponent(stdwaterDemandCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
+                                .addComponent(jLabel98, javax.swing.GroupLayout.PREFERRED_SIZE, 132, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(domesticSewerPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(flushSewerPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(rawWaterTankPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(domesticWaterTankPercent, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(stpFlushingTank, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addGroup(jPanel7Layout.createSequentialGroup()
-                                .addComponent(jLabel79, javax.swing.GroupLayout.DEFAULT_SIZE, 176, Short.MAX_VALUE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(ugrFireFightingTank, javax.swing.GroupLayout.PREFERRED_SIZE, 87, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(19, 19, 19))))
+                                .addComponent(dryGarbageInputCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(31, 31, 31)
+                        .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel97, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel99, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(64, 64, 64)
+                        .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(stdSolidWasteKgPPCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(wetGarbageInputCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(14, 14, 14)
+                        .addComponent(jLabel94, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(stdGasBankCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(41, 41, 41)))
+                .addComponent(jLabel95)
+                .addGap(29, 29, 29)
+                .addComponent(stdSolarCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(214, Short.MAX_VALUE))
         );
-        jPanel7Layout.setVerticalGroup(
-            jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(jPanel7Layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jLabel71)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(domesticSewerPercent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(jPanel7Layout.createSequentialGroup()
-                        .addGap(3, 3, 3)
-                        .addComponent(jLabel72, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(flushSewerPercent)
-                    .addComponent(jLabel73, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(rawWaterTankPercent)
-                    .addComponent(jLabel74, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(domesticWaterTankPercent)
-                    .addComponent(jLabel75, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel76, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(stpFlushingTank))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel79, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ugrFireFightingTank))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel7Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel80, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(ohtFireFightingTank))
-                .addContainerGap())
+        consumptionParamPanel1Layout.setVerticalGroup(
+            consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
+                .addComponent(jLabel96)
+                .addGap(13, 13, 13)
+                .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
+                        .addGap(1, 1, 1)
+                        .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel27)
+                            .addComponent(jLabel97, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(stdSolidWasteKgPPCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(stdwaterDemandCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(stdSolarCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel95)
+                        .addComponent(stdGasBankCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel94)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(wetGarbageInputCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(dryGarbageInputCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel99, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(jLabel98, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(12, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout inputCriteriaFormLayout = new javax.swing.GroupLayout(inputCriteriaForm);
@@ -1077,49 +1035,49 @@ public class DataCalculator extends javax.swing.JFrame {
         inputCriteriaFormLayout.setHorizontalGroup(
             inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(inputCriteriaFormLayout.createSequentialGroup()
+                .addGap(507, 507, 507)
+                .addComponent(inputCriteriaTabNextBtn)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(inputCriteriaFormLayout.createSequentialGroup()
                 .addGroup(inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(peoplePerTypeInputPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 1064, Short.MAX_VALUE)
+                    .addComponent(consumptionParamPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(inputCriteriaFormLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(jCheckBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(inputCriteriaFormLayout.createSequentialGroup()
-                        .addComponent(peoplePerTypeInputPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 233, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(27, 27, 27)
-                        .addGroup(inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(consumptionParamPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 312, Short.MAX_VALUE)
-                            .addComponent(jPanel7, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                    .addGroup(inputCriteriaFormLayout.createSequentialGroup()
-                        .addGap(369, 369, 369)
-                        .addComponent(inputCriteriaTabNextBtn)))
-                .addContainerGap(43, Short.MAX_VALUE))
+                        .addGroup(inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(inputCriteriaFormLayout.createSequentialGroup()
+                                .addContainerGap()
+                                .addComponent(modifyStdVals, javax.swing.GroupLayout.PREFERRED_SIZE, 159, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(consumptionParamPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE)))
+                .addContainerGap())
         );
         inputCriteriaFormLayout.setVerticalGroup(
             inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(inputCriteriaFormLayout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jCheckBox1)
+                .addGap(18, 18, 18)
+                .addComponent(modifyStdVals)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(peoplePerTypeInputPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 403, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(inputCriteriaFormLayout.createSequentialGroup()
-                        .addGroup(inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(consumptionParamPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(inputCriteriaFormLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jPanel7, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 81, Short.MAX_VALUE)
+                .addComponent(peoplePerTypeInputPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jPanel10, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(consumptionParamPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(consumptionParamPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 118, Short.MAX_VALUE)
                 .addComponent(inputCriteriaTabNextBtn)
-                .addGap(10, 10, 10))
+                .addGap(43, 43, 43))
         );
 
-        tabbedPane.addTab("Input Criteria ", inputCriteriaForm);
+        tabbedPane.addTab("Design Criteria", inputCriteriaForm);
 
         peopertTypeSelector.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Residential", "Commertial" }));
+        peopertTypeSelector.addItemListener(new java.awt.event.ItemListener() {
+            public void itemStateChanged(java.awt.event.ItemEvent evt) {
+                peopertTypeSelectorItemStateChanged(evt);
+            }
+        });
         peopertTypeSelector.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 peopertTypeSelectorActionPerformed(evt);
@@ -1163,27 +1121,30 @@ public class DataCalculator extends javax.swing.JFrame {
         outsideAreaPanelLayout.setHorizontalGroup(
             outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(outsideAreaPanelLayout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel8)
-                    .addComponent(jLabel7)
-                    .addComponent(jLabel9))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                    .addComponent(swimmingAreaInput, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
-                    .addComponent(landscapeAreaInput, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(clubHouseAreaInput, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(landscapeAreaWater, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(swimmingPoolCapacity, 0, 1, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                    .addComponent(jLabel53, javax.swing.GroupLayout.DEFAULT_SIZE, 146, Short.MAX_VALUE)
-                    .addComponent(jLabel70)))
-            .addGroup(outsideAreaPanelLayout.createSequentialGroup()
-                .addGap(39, 39, 39)
-                .addComponent(outsideAreaBtn))
+                    .addGroup(outsideAreaPanelLayout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel8)
+                            .addComponent(jLabel7)
+                            .addComponent(jLabel9))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                            .addComponent(swimmingAreaInput, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE)
+                            .addComponent(landscapeAreaInput, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(clubHouseAreaInput, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                            .addComponent(landscapeAreaWater, javax.swing.GroupLayout.PREFERRED_SIZE, 43, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(swimmingPoolCapacity, 0, 1, Short.MAX_VALUE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel70, javax.swing.GroupLayout.PREFERRED_SIZE, 146, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel53, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(outsideAreaPanelLayout.createSequentialGroup()
+                        .addGap(39, 39, 39)
+                        .addComponent(outsideAreaBtn)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         outsideAreaPanelLayout.setVerticalGroup(
             outsideAreaPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1228,60 +1189,6 @@ public class DataCalculator extends javax.swing.JFrame {
         jScrollPane1.setViewportView(towerDataTable);
 
         typePanel.setLayout(new java.awt.CardLayout());
-
-        jLabel1.setText("Office");
-
-        nrOffice.setPreferredSize(new java.awt.Dimension(80, 20));
-
-        addOfficeDataBtn.setText("Add Office");
-        addOfficeDataBtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addOfficeDataBtnActionPerformed(evt);
-            }
-        });
-
-        jLabel2.setText("Showroom");
-        jLabel2.setToolTipText("");
-
-        javax.swing.GroupLayout officePanelLayout = new javax.swing.GroupLayout(officePanel);
-        officePanel.setLayout(officePanelLayout);
-        officePanelLayout.setHorizontalGroup(
-            officePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(officePanelLayout.createSequentialGroup()
-                .addGroup(officePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(officePanelLayout.createSequentialGroup()
-                        .addGap(53, 53, 53)
-                        .addComponent(addOfficeDataBtn))
-                    .addGroup(officePanelLayout.createSequentialGroup()
-                        .addGap(26, 26, 26)
-                        .addGroup(officePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, 67, Short.MAX_VALUE))
-                        .addGap(31, 31, 31)
-                        .addGroup(officePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                            .addComponent(nrOffice, javax.swing.GroupLayout.PREFERRED_SIZE, 1, Short.MAX_VALUE)
-                            .addComponent(nrShowroom, javax.swing.GroupLayout.DEFAULT_SIZE, 77, Short.MAX_VALUE))))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-        );
-        officePanelLayout.setVerticalGroup(
-            officePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(officePanelLayout.createSequentialGroup()
-                .addGap(7, 7, 7)
-                .addGroup(officePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(nrOffice, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(officePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel2)
-                    .addComponent(nrShowroom, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 215, Short.MAX_VALUE)
-                .addComponent(addOfficeDataBtn)
-                .addContainerGap())
-        );
-
-        officePanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {jLabel1, nrOffice});
-
-        typePanel.add(officePanel, "card3");
 
         residentialPanel.setForeground(new java.awt.Color(255, 255, 0));
 
@@ -1393,56 +1300,57 @@ public class DataCalculator extends javax.swing.JFrame {
         residentialPanelLayout.setHorizontalGroup(
             residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(residentialPanelLayout.createSequentialGroup()
-                .addGap(48, 48, 48)
-                .addComponent(addTowerBtn)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addGroup(residentialPanelLayout.createSequentialGroup()
-                .addGap(20, 20, 20)
                 .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(residentialPanelLayout.createSequentialGroup()
-                        .addComponent(jLabel41, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(nrFlats2BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(residentialPanelLayout.createSequentialGroup()
-                        .addComponent(jLabel44, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(nrFlats3AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(residentialPanelLayout.createSequentialGroup()
-                        .addComponent(jLabel45, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(nrFlats4BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(residentialPanelLayout.createSequentialGroup()
-                        .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(63, 63, 63)
-                        .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(residentialPanelLayout.createSequentialGroup()
-                        .addGap(1, 1, 1)
+                        .addGap(20, 20, 20)
                         .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(residentialPanelLayout.createSequentialGroup()
-                                .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel47, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel46, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(jLabel41, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(nrStudioInput, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(nrFlats4AndHalfBHKInput, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addComponent(nrFlats2BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(residentialPanelLayout.createSequentialGroup()
-                                .addComponent(jLabel42, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel44, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(nrFlats2NHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(nrFlats3AndHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(residentialPanelLayout.createSequentialGroup()
-                                .addComponent(jLabel43, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(jLabel45, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(nrFlats3BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                                .addComponent(nrFlats4BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(residentialPanelLayout.createSequentialGroup()
+                                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(63, 63, 63)
+                                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(residentialPanelLayout.createSequentialGroup()
+                                .addGap(1, 1, 1)
+                                .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(residentialPanelLayout.createSequentialGroup()
+                                        .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jLabel47, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(jLabel46, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGap(18, 18, 18)
+                                        .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(nrStudioInput, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addComponent(nrFlats4AndHalfBHKInput, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                    .addGroup(residentialPanelLayout.createSequentialGroup()
+                                        .addComponent(jLabel42, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(nrFlats2NHalfBHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(residentialPanelLayout.createSequentialGroup()
+                                        .addComponent(jLabel43, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(18, 18, 18)
+                                        .addComponent(nrFlats3BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addGroup(residentialPanelLayout.createSequentialGroup()
+                                .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addComponent(jLabel62, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jLabel40, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
+                                .addGap(18, 18, 18)
+                                .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(nrFlats1BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(towerNameInput, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)))))
                     .addGroup(residentialPanelLayout.createSequentialGroup()
-                        .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(jLabel62, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jLabel40, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, 80, Short.MAX_VALUE))
-                        .addGap(18, 18, 18)
-                        .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(nrFlats1BHKInput, javax.swing.GroupLayout.PREFERRED_SIZE, 80, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(towerNameInput, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGap(0, 18, Short.MAX_VALUE))
+                        .addGap(55, 55, 55)
+                        .addComponent(addTowerBtn)))
+                .addGap(0, 56, Short.MAX_VALUE))
         );
 
         residentialPanelLayout.linkSize(javax.swing.SwingConstants.HORIZONTAL, new java.awt.Component[] {jLabel40, jLabel62});
@@ -1456,7 +1364,7 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel5)
                     .addComponent(jLabel6))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel62)
                     .addComponent(towerNameInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -1494,9 +1402,9 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addGroup(residentialPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(nrStudioInput, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel47, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 17, Short.MAX_VALUE)
                 .addComponent(addTowerBtn)
-                .addGap(14, 14, 14))
+                .addGap(25, 25, 25))
         );
 
         residentialPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {jLabel40, jLabel62});
@@ -1504,6 +1412,97 @@ public class DataCalculator extends javax.swing.JFrame {
         residentialPanelLayout.linkSize(javax.swing.SwingConstants.VERTICAL, new java.awt.Component[] {nrFlats1BHKInput, towerNameInput});
 
         typePanel.add(residentialPanel, "card2");
+
+        jLabel82.setText("Floor Number");
+
+        jLabel25.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel25.setText("Type");
+
+        jLabel26.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel26.setText("# of Flats");
+
+        jLabel83.setText("Type Of Area");
+
+        jLabel84.setText("Area (m sq)");
+
+        jLabel85.setText("No. of floors");
+
+        jLabel88.setText("No. of Shifts");
+
+        jButton1.setText("Add");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        officeType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Office", "Showroom" }));
+
+        nrFloorInput.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "0", "1", "2", "3", "4" }));
+
+        javax.swing.GroupLayout officeShowroomPanelLayout = new javax.swing.GroupLayout(officeShowroomPanel);
+        officeShowroomPanel.setLayout(officeShowroomPanelLayout);
+        officeShowroomPanelLayout.setHorizontalGroup(
+            officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(officeShowroomPanelLayout.createSequentialGroup()
+                .addGap(11, 11, 11)
+                .addGroup(officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel82, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(officeShowroomPanelLayout.createSequentialGroup()
+                        .addGroup(officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jButton1)
+                            .addGroup(officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                .addGroup(officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                    .addGroup(officeShowroomPanelLayout.createSequentialGroup()
+                                        .addGap(20, 20, 20)
+                                        .addComponent(jLabel25, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(jLabel85, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                    .addComponent(jLabel83, javax.swing.GroupLayout.DEFAULT_SIZE, 127, Short.MAX_VALUE)
+                                    .addComponent(jLabel84, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(jLabel88, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(24, 24, 24)
+                        .addGroup(officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(nrOfShiftsInput, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(officeAreaInput, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(officeFloorNrInput, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(officeType, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(nrFloorInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel26, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                .addGap(0, 21, Short.MAX_VALUE))
+        );
+        officeShowroomPanelLayout.setVerticalGroup(
+            officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(officeShowroomPanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel25)
+                    .addComponent(jLabel26))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel82)
+                    .addComponent(officeFloorNrInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel83)
+                    .addComponent(officeType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel84)
+                    .addComponent(officeAreaInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(nrFloorInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel85))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(officeShowroomPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel88)
+                    .addComponent(nrOfShiftsInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 142, Short.MAX_VALUE)
+                .addComponent(jButton1)
+                .addContainerGap())
+        );
+
+        typePanel.add(officeShowroomPanel, "card4");
 
         inputDataNextBtn.setText("Next");
         inputDataNextBtn.addActionListener(new java.awt.event.ActionListener() {
@@ -1573,7 +1572,7 @@ public class DataCalculator extends javax.swing.JFrame {
         towerGroupPanel.setLayout(towerGroupPanelLayout);
         towerGroupPanelLayout.setHorizontalGroup(
             towerGroupPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 183, Short.MAX_VALUE)
+            .addGap(0, 219, Short.MAX_VALUE)
         );
         towerGroupPanelLayout.setVerticalGroup(
             towerGroupPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1594,26 +1593,488 @@ public class DataCalculator extends javax.swing.JFrame {
         jPanel8Layout.setHorizontalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel8Layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel8Layout.createSequentialGroup()
-                        .addContainerGap()
                         .addComponent(groupTowers)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(clearGroupedTowerBtn))
-                    .addComponent(towerGroupScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 185, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE))
+                        .addComponent(clearGroupedTowerBtn)
+                        .addGap(97, 97, 97))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel8Layout.createSequentialGroup()
+                        .addComponent(towerGroupScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 231, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
+                .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 352, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(15, Short.MAX_VALUE))
         );
         jPanel8Layout.setVerticalGroup(
             jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(jScrollPane5, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
             .addGroup(jPanel8Layout.createSequentialGroup()
-                .addComponent(towerGroupScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(towerGroupScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 127, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel8Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(groupTowers)
                     .addComponent(clearGroupedTowerBtn))
                 .addContainerGap())
+        );
+
+        jLabel51.setBackground(new java.awt.Color(204, 255, 255));
+        jLabel51.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel51.setForeground(new java.awt.Color(0, 0, 255));
+        jLabel51.setText("PLOT AREA( SQ.MTRS )");
+
+        jLabel52.setText("TERRACE");
+
+        jLabel54.setText("GREEN AREA");
+
+        jLabel55.setText("PAVED AREA");
+
+        jLabel56.setText("TOTAL PLOT AREA");
+
+        totalPlotArea.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                totalPlotAreaActionPerformed(evt);
+            }
+        });
+
+        jLabel57.setText("<html>EXTRA AREA TO BE CATERED</html>");
+
+        javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
+        jPanel2.setLayout(jPanel2Layout);
+        jPanel2Layout.setHorizontalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel51)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jLabel56)
+                            .addComponent(jLabel52, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(57, 57, 57)
+                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(terraceArea, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel54, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel2Layout.createSequentialGroup()
+                                .addComponent(totalPlotArea, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jLabel57, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                .addGap(31, 31, 31)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                    .addComponent(greenArea, javax.swing.GroupLayout.PREFERRED_SIZE, 56, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(extraAreaCatered, javax.swing.GroupLayout.PREFERRED_SIZE, 57, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(40, 40, 40)
+                .addComponent(jLabel55, javax.swing.GroupLayout.PREFERRED_SIZE, 94, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(45, 45, 45)
+                .addComponent(pavedArea, javax.swing.GroupLayout.PREFERRED_SIZE, 51, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel2Layout.setVerticalGroup(
+            jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel51)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel54)
+                    .addComponent(greenArea, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel52)
+                    .addComponent(terraceArea, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel55)
+                    .addComponent(pavedArea, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(18, 18, 18)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel56)
+                    .addComponent(totalPlotArea, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel57, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(extraAreaCatered, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(26, Short.MAX_VALUE))
+        );
+
+        jPanel3.setLayout(new org.netbeans.lib.awtextra.AbsoluteLayout());
+
+        jLabel59.setText("<html>HEIGHT OF <br>TALLEST BUILDING <br>FROM GR</html>");
+        jPanel3.add(jLabel59, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 30, 110, 50));
+        jPanel3.add(heightOfTallestBld, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 40, 50, 20));
+        jPanel3.add(residualHeadPlumbing, new org.netbeans.lib.awtextra.AbsoluteConstraints(590, 40, 50, -1));
+
+        jLabel60.setText("<html>BASEMENT AREA</html>");
+        jPanel3.add(jLabel60, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 40, 100, 20));
+        jPanel3.add(basementArea, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 40, 50, -1));
+
+        jLabel61.setText("<html>RESIDUAL HEAD <br>(PLUMBING)</html>");
+        jPanel3.add(jLabel61, new org.netbeans.lib.awtextra.AbsoluteConstraints(450, 30, 120, 40));
+        jPanel3.add(frictionLossInput, new org.netbeans.lib.awtextra.AbsoluteConstraints(360, 90, 50, -1));
+
+        jLabel63.setText("<html>RESIDUAL HEAD (FIRE)</html>");
+        jPanel3.add(jLabel63, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 90, 130, 22));
+        jPanel3.add(residualHeadFire, new org.netbeans.lib.awtextra.AbsoluteConstraints(160, 90, 50, -1));
+
+        jLableStdFrictionLoss.setText("FRICTION LOSS");
+        jPanel3.add(jLableStdFrictionLoss, new org.netbeans.lib.awtextra.AbsoluteConstraints(220, 90, 90, 22));
+
+        jLabel58.setBackground(new java.awt.Color(204, 255, 255));
+        jLabel58.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel58.setForeground(new java.awt.Color(0, 0, 255));
+        jLabel58.setText("Design Criteria for Fire Fighting");
+        jPanel3.add(jLabel58, new org.netbeans.lib.awtextra.AbsoluteConstraints(10, 0, -1, -1));
+
+        jLabel90.setBackground(new java.awt.Color(204, 255, 255));
+        jLabel90.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel90.setForeground(new java.awt.Color(0, 0, 255));
+        jLabel90.setText("Residential");
+
+        jLabel1.setText("UGT Capacity");
+
+        jLabel106.setText("Domestic Tank");
+
+        jLabel101.setText("Raw Water Tank");
+
+        jLabel104.setText(" Fire Fighting Tank");
+
+        jLabel103.setText("FlushingTank (days)");
+
+        javax.swing.GroupLayout jPanel12Layout = new javax.swing.GroupLayout(jPanel12);
+        jPanel12.setLayout(jPanel12Layout);
+        jPanel12Layout.setHorizontalGroup(
+            jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel12Layout.createSequentialGroup()
+                .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel1)
+                    .addGroup(jPanel12Layout.createSequentialGroup()
+                        .addComponent(jLabel106, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(59, 59, 59)
+                        .addComponent(ugtDomesticWaterTankPercent, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel101, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(45, 45, 45)
+                        .addComponent(ugtRawWaterTankPercent, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(30, 30, 30)
+                        .addComponent(jLabel104)
+                        .addGap(39, 39, 39)
+                        .addComponent(ugtFireFightingTank, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(43, 43, 43)
+                        .addComponent(jLabel103)
+                        .addGap(41, 41, 41)
+                        .addComponent(ugtFlushingTank, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(148, Short.MAX_VALUE))
+        );
+        jPanel12Layout.setVerticalGroup(
+            jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel12Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel12Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel106, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ugtDomesticWaterTankPercent)
+                    .addComponent(jLabel101, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ugtRawWaterTankPercent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel104, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ugtFireFightingTank)
+                    .addComponent(jLabel103, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ugtFlushingTank))
+                .addContainerGap(9, Short.MAX_VALUE))
+        );
+
+        jLabel2.setText("OHT Capacity");
+
+        jLabel107.setText("Domestic Tank");
+
+        jLabel109.setText(" Fire Fighting Tank");
+
+        jLabel110.setText("FlushingTank (days)");
+
+        ohtDomesticTankPercent.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ohtDomesticTankPercentActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel13Layout = new javax.swing.GroupLayout(jPanel13);
+        jPanel13.setLayout(jPanel13Layout);
+        jPanel13Layout.setHorizontalGroup(
+            jPanel13Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel13Layout.createSequentialGroup()
+                .addGroup(jPanel13Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel2)
+                    .addGroup(jPanel13Layout.createSequentialGroup()
+                        .addComponent(jLabel107, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(57, 57, 57)
+                        .addComponent(ohtDomesticTankPercent, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(12, 12, 12)
+                        .addComponent(jLabel109)
+                        .addGap(46, 46, 46)
+                        .addComponent(ohtFireFightingTank, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(33, 33, 33)
+                        .addComponent(jLabel110)
+                        .addGap(32, 32, 32)
+                        .addComponent(ohtFlushingTank, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel13Layout.setVerticalGroup(
+            jPanel13Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel13Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel2)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel13Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel107, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel109, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel110, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ohtFlushingTank)
+                    .addComponent(ohtDomesticTankPercent)
+                    .addComponent(ohtFireFightingTank))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jLabel4.setText("STP Capacity");
+
+        jLabel93.setText("Domestic Flow to STP");
+
+        jLabel100.setText("Flushing Flow to STP");
+
+        javax.swing.GroupLayout jPanel14Layout = new javax.swing.GroupLayout(jPanel14);
+        jPanel14.setLayout(jPanel14Layout);
+        jPanel14Layout.setHorizontalGroup(
+            jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel14Layout.createSequentialGroup()
+                .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel4)
+                    .addGroup(jPanel14Layout.createSequentialGroup()
+                        .addComponent(jLabel93, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(domesticSewerPercent, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jLabel100)
+                        .addGap(34, 34, 34)
+                        .addComponent(flushingSewerPercent, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel14Layout.setVerticalGroup(
+            jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel14Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel14Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel93, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(domesticSewerPercent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel100, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(flushingSewerPercent, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout jPanel11Layout = new javax.swing.GroupLayout(jPanel11);
+        jPanel11.setLayout(jPanel11Layout);
+        jPanel11Layout.setHorizontalGroup(
+            jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel11Layout.createSequentialGroup()
+                .addGap(9, 9, 9)
+                .addGroup(jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel14, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel13, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel11Layout.createSequentialGroup()
+                        .addComponent(jLabel90, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel11Layout.createSequentialGroup()
+                        .addComponent(jPanel12, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(16, 16, 16))))
+        );
+        jPanel11Layout.setVerticalGroup(
+            jPanel11Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel11Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel90)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel12, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel13, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel14, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+        );
+
+        jLabel102.setBackground(new java.awt.Color(204, 255, 255));
+        jLabel102.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
+        jLabel102.setForeground(new java.awt.Color(0, 0, 255));
+        jLabel102.setText("Commertial");
+
+        jLabel28.setText("UGT Capacity");
+
+        jLabel108.setText("Domestic Tank");
+
+        jLabel105.setText("Raw Water Tank");
+
+        jLabel111.setText(" Fire Fighting Tank");
+
+        jLabel112.setText("FlushingTank (days)");
+
+        javax.swing.GroupLayout jPanel16Layout = new javax.swing.GroupLayout(jPanel16);
+        jPanel16.setLayout(jPanel16Layout);
+        jPanel16Layout.setHorizontalGroup(
+            jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel16Layout.createSequentialGroup()
+                .addGroup(jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel28)
+                    .addGroup(jPanel16Layout.createSequentialGroup()
+                        .addComponent(jLabel108, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(60, 60, 60)
+                        .addComponent(ugtDomesticWaterTankPercentCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(20, 20, 20)
+                        .addComponent(jLabel105, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(40, 40, 40)
+                        .addComponent(ugtRawWaterTankPercentCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(29, 29, 29)
+                        .addComponent(jLabel111)
+                        .addGap(44, 44, 44)
+                        .addComponent(ugtFireFightingTankCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(40, 40, 40)
+                        .addComponent(jLabel112)
+                        .addGap(43, 43, 43)
+                        .addComponent(ugtFlushingTankCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel16Layout.setVerticalGroup(
+            jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel16Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel28)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel108, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ugtDomesticWaterTankPercentCommertial)
+                    .addComponent(jLabel105, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ugtRawWaterTankPercentCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel111, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ugtFireFightingTankCommertial)
+                    .addComponent(jLabel112, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ugtFlushingTankCommertial))
+                .addContainerGap(9, Short.MAX_VALUE))
+        );
+
+        jLabel29.setText("OHT Capacity");
+
+        jLabel113.setText("Domestic Tank");
+
+        jLabel114.setText(" Fire Fighting Tank");
+
+        jLabel115.setText("FlushingTank (days)");
+
+        ohtDomesticTankPercentCommertial.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ohtDomesticTankPercentCommertialActionPerformed(evt);
+            }
+        });
+
+        ohtFireFightingTankCommertial.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                ohtFireFightingTankCommertialActionPerformed(evt);
+            }
+        });
+
+        javax.swing.GroupLayout jPanel17Layout = new javax.swing.GroupLayout(jPanel17);
+        jPanel17.setLayout(jPanel17Layout);
+        jPanel17Layout.setHorizontalGroup(
+            jPanel17Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel17Layout.createSequentialGroup()
+                .addGroup(jPanel17Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel29)
+                    .addGroup(jPanel17Layout.createSequentialGroup()
+                        .addComponent(jLabel113, javax.swing.GroupLayout.PREFERRED_SIZE, 88, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(58, 58, 58)
+                        .addComponent(ohtDomesticTankPercentCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(22, 22, 22)
+                        .addComponent(jLabel114)
+                        .addGap(36, 36, 36)
+                        .addComponent(ohtFireFightingTankCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(35, 35, 35)
+                        .addComponent(jLabel115)
+                        .addGap(33, 33, 33)
+                        .addComponent(ohtFlushingTankCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel17Layout.setVerticalGroup(
+            jPanel17Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel17Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel29)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel17Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel113, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel114, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel115, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(ohtFlushingTankCommertial)
+                    .addComponent(ohtDomesticTankPercentCommertial)
+                    .addComponent(ohtFireFightingTankCommertial))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        jLabel30.setText("STP Capacity");
+
+        jLabel116.setText("Domestic Flow to STP");
+
+        jLabel117.setText("Flushing Flow to STP");
+
+        javax.swing.GroupLayout jPanel18Layout = new javax.swing.GroupLayout(jPanel18);
+        jPanel18.setLayout(jPanel18Layout);
+        jPanel18Layout.setHorizontalGroup(
+            jPanel18Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel18Layout.createSequentialGroup()
+                .addGroup(jPanel18Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel30)
+                    .addGroup(jPanel18Layout.createSequentialGroup()
+                        .addComponent(jLabel116, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(domesticSewerPercentCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jLabel117)
+                        .addGap(28, 28, 28)
+                        .addComponent(flushingSewerPercentCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel18Layout.setVerticalGroup(
+            jPanel18Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel18Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel30)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel18Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel116, javax.swing.GroupLayout.PREFERRED_SIZE, 19, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(domesticSewerPercentCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(jLabel117, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(flushingSewerPercentCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout jPanel15Layout = new javax.swing.GroupLayout(jPanel15);
+        jPanel15.setLayout(jPanel15Layout);
+        jPanel15Layout.setHorizontalGroup(
+            jPanel15Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel15Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel15Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel18, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jPanel17, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(jPanel15Layout.createSequentialGroup()
+                        .addComponent(jLabel102, javax.swing.GroupLayout.PREFERRED_SIZE, 187, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel15Layout.createSequentialGroup()
+                        .addComponent(jPanel16, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addGap(16, 16, 16))))
+        );
+        jPanel15Layout.setVerticalGroup(
+            jPanel15Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel15Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel102)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel16, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel17, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jPanel18, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
@@ -1622,26 +2083,34 @@ public class DataCalculator extends javax.swing.JFrame {
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(mainPanelLayout.createSequentialGroup()
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel15, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(mainPanelLayout.createSequentialGroup()
-                                .addComponent(outsideAreaPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                                .addComponent(jPanel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(11, 11, 11)
+                        .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(mainPanelLayout.createSequentialGroup()
                                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(peopertTypeSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 59, Short.MAX_VALUE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 576, Short.MAX_VALUE)
-                                    .addComponent(jScrollPane4))
-                                .addGap(12, 12, 12))))
-                    .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addGap(369, 369, 369)
-                        .addComponent(inputDataNextBtn)))
+                                    .addComponent(jScrollPane4, javax.swing.GroupLayout.DEFAULT_SIZE, 602, Short.MAX_VALUE)
+                                    .addComponent(jScrollPane1)))
+                            .addGroup(mainPanelLayout.createSequentialGroup()
+                                .addComponent(outsideAreaPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 404, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, 0)
+                                .addComponent(jPanel8, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
+            .addComponent(jPanel3, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(mainPanelLayout.createSequentialGroup()
+                .addGap(486, 486, 486)
+                .addComponent(inputDataNextBtn)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(mainPanelLayout.createSequentialGroup()
+                    .addComponent(jPanel11, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addContainerGap()))
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1649,33 +2118,48 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addContainerGap()
                 .addComponent(peopertTypeSelector, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, mainPanelLayout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 168, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)
+                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(14, 14, 14))
                     .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 104, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jScrollPane4, javax.swing.GroupLayout.PREFERRED_SIZE, 118, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 48, Short.MAX_VALUE)
+                        .addComponent(typePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(20, 20, 20)))
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel8, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(outsideAreaPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(235, 235, 235)
+                .addComponent(jPanel15, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, 130, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(inputDataNextBtn)
-                .addGap(10, 10, 10))
+                .addContainerGap(8, Short.MAX_VALUE))
+            .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(mainPanelLayout.createSequentialGroup()
+                    .addGap(563, 563, 563)
+                    .addComponent(jPanel11, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addContainerGap(549, Short.MAX_VALUE)))
         );
+
+        jScrollPane2.setViewportView(mainPanel);
 
         javax.swing.GroupLayout inputDataPanelLayout = new javax.swing.GroupLayout(inputDataPanel);
         inputDataPanel.setLayout(inputDataPanelLayout);
         inputDataPanelLayout.setHorizontalGroup(
             inputDataPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 1070, Short.MAX_VALUE)
         );
         inputDataPanelLayout.setVerticalGroup(
             inputDataPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 608, Short.MAX_VALUE)
         );
 
-        tabbedPane.addTab("Input form", inputDataPanel);
+        tabbedPane.addTab("Project Details", inputDataPanel);
 
         populationCriteriaPanel.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
@@ -1749,7 +2233,7 @@ public class DataCalculator extends javax.swing.JFrame {
         jPanel5.setLayout(jPanel5Layout);
         jPanel5Layout.setHorizontalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane6, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
+            .addComponent(jScrollPane6, javax.swing.GroupLayout.DEFAULT_SIZE, 600, Short.MAX_VALUE)
         );
         jPanel5Layout.setVerticalGroup(
             jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1773,7 +2257,7 @@ public class DataCalculator extends javax.swing.JFrame {
         jPanel6.setLayout(jPanel6Layout);
         jPanel6Layout.setHorizontalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jScrollPane7, javax.swing.GroupLayout.DEFAULT_SIZE, 459, Short.MAX_VALUE)
+            .addComponent(jScrollPane7)
         );
         jPanel6Layout.setVerticalGroup(
             jPanel6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1795,20 +2279,18 @@ public class DataCalculator extends javax.swing.JFrame {
         jPanel9Layout.setHorizontalGroup(
             jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel9Layout.createSequentialGroup()
-                .addGap(19, 19, 19)
                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel78, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addComponent(jLabel77, javax.swing.GroupLayout.DEFAULT_SIZE, 78, Short.MAX_VALUE))
+                    .addComponent(jLabel77, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(projectNameInput)
-                    .addComponent(pdfLocationInput, javax.swing.GroupLayout.DEFAULT_SIZE, 171, Short.MAX_VALUE))
-                .addContainerGap(125, Short.MAX_VALUE))
+                    .addComponent(pdfLocationInput, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         jPanel9Layout.setVerticalGroup(
             jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel9Layout.createSequentialGroup()
-                .addContainerGap()
                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(projectNameInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel77))
@@ -1816,7 +2298,7 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addGroup(jPanel9Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel78)
                     .addComponent(pdfLocationInput, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(59, Short.MAX_VALUE))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
 
         waterDemandPDFBtn.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/export-pdf.png"))); // NOI18N
@@ -1843,9 +2325,9 @@ public class DataCalculator extends javax.swing.JFrame {
         jPanel4Layout.setHorizontalGroup(
             jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel4Layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(427, 427, 427)
                 .addComponent(waterDemandPDFBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(322, 322, 322)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(saveProjectBtn, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(17, 17, 17))
         );
@@ -1870,18 +2352,22 @@ public class DataCalculator extends javax.swing.JFrame {
                         .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel67, javax.swing.GroupLayout.PREFERRED_SIZE, 81, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel69)
-                            .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel66, javax.swing.GroupLayout.PREFERRED_SIZE, 147, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(jLabel65)
                             .addComponent(waterDemandOverviewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(outdoorOverviewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                            .addComponent(outdoorOverviewPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jPanel6, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(overviewPanelLayout.createSequentialGroup()
-                                .addComponent(jLabel68)
-                                .addGap(0, 0, Short.MAX_VALUE))
-                            .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                                .addGap(13, 13, 13)
+                                .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(overviewPanelLayout.createSequentialGroup()
+                                        .addComponent(jLabel68)
+                                        .addGap(0, 0, Short.MAX_VALUE))
+                                    .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                            .addGroup(overviewPanelLayout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(jPanel5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
                     .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -1909,9 +2395,9 @@ public class DataCalculator extends javax.swing.JFrame {
                 .addGroup(overviewPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jPanel9, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(outdoorOverviewPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                .addGap(18, 18, 18)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 48, Short.MAX_VALUE)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 16, Short.MAX_VALUE))
+                .addGap(32, 32, 32))
         );
 
         tabbedPane.addTab("Overview", overviewPanel);
@@ -1920,20 +2406,23 @@ public class DataCalculator extends javax.swing.JFrame {
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(tabbedPane)
+            .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 1070, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 597, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(0, 0, Short.MAX_VALUE))
+                .addContainerGap()
+                .addComponent(tabbedPane, javax.swing.GroupLayout.PREFERRED_SIZE, 643, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addGroup(layout.createSequentialGroup()
+                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1948,7 +2437,7 @@ public class DataCalculator extends javax.swing.JFrame {
             if(projectNameInput.getText().isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Empty project name", "Error", JOptionPane.ERROR_MESSAGE);
             } else if(pdfLocationInput.getText().isEmpty()) {
-                JOptionPane.showMessageDialog(this, "Empty pdf location", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Empty PDF location", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
                 String pdfFolderLocation = pdfLocationInput.getText();
                 PdfData.PdfDataBuilder builder = getPdfDataBuilder();
@@ -1957,12 +2446,12 @@ public class DataCalculator extends javax.swing.JFrame {
                 String pdfFileLocation = pdfData.getPdfLocation()+ "/" + pdfData.getProjectName()+".pdf";
                 File outputFile = new File(pdfFileLocation);
                 if(!outputFile.exists()) {
-                    PDFGenerator.generateWaterDemandPDF(pdfData, this);
+                    PDFGenerator.generatePDF(pdfData, this);
                 } else {
                     JOptionPane.showMessageDialog(this, "PDF with same project name exist", "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
-        } catch (FileNotFoundException ex) {
+        } catch (HeadlessException ex) {
             log.error("Error file reading", ex);
         }
     }//GEN-LAST:event_waterDemandPDFBtnActionPerformed
@@ -1972,6 +2461,10 @@ public class DataCalculator extends javax.swing.JFrame {
         builder.setOfficesList(officesList)
                 .setOutsideAreaMap(outsideAreaMap)
                 .setGroupedTowerNamesList(groupedTowerNamesList)
+                .setCapacityDetailsResidential(capacityDetailsResidential)
+                .setCapacityDetailsCommertial(capacityDetailsCommertial)
+                .setFireFightingDetails(fireFightingDetails)
+                .setPlotArea(plotArea)
                 .setProjectName(projectNameInput.getText());
         return builder;
     }
@@ -1980,19 +2473,19 @@ public class DataCalculator extends javax.swing.JFrame {
         boolean valid = true;
         TreeMap<StandardType,Integer> outsideArea = new TreeMap<>();
         try {
-            Integer landscapeArea = getIntegerVal(landscapeAreaInput.getText());
+            Integer landscapeArea = DataUtils.getIntegerVal(landscapeAreaInput.getText());
             outsideArea.put(StandardType.LANDSCAPE, landscapeArea);
         } catch (InvalidInputException ex) {
             valid = false;
         }
         try {
-            Integer swimmingPoolArea = getIntegerVal(swimmingAreaInput.getText());
+            Integer swimmingPoolArea = DataUtils.getIntegerVal(swimmingAreaInput.getText());
             outsideArea.put(StandardType.SWIMMING_POOL, swimmingPoolArea);
         } catch (InvalidInputException ex) {
             valid = false;
         }
         try {
-            Integer clubHouseArea = getIntegerVal(clubHouseAreaInput.getText());
+            Integer clubHouseArea = DataUtils.getIntegerVal(clubHouseAreaInput.getText());
             outsideArea.put(StandardType.CLUB_HOUSE, clubHouseArea);
         } catch (InvalidInputException ex) {
             valid = false;
@@ -2015,12 +2508,14 @@ public class DataCalculator extends javax.swing.JFrame {
 
     private void inputDataNextBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_inputDataNextBtnActionPerformed
         if (towersList.size() > 0 || officesList.size() > 0) {
-            tabbedPane.setEnabledAt(2, true);
-            tabbedPane.setSelectedIndex(2);
+            if(validateAndSetInputs()) {
+                createOverview();
+                tabbedPane.setEnabledAt(2, true);
+                tabbedPane.setSelectedIndex(2);
+            }
         } else {
             JOptionPane.showMessageDialog(this, "No Data provided?", "Error", JOptionPane.ERROR_MESSAGE);
         }
-        createOverview();
     }//GEN-LAST:event_inputDataNextBtnActionPerformed
 
     private void createOverview() {
@@ -2113,12 +2608,30 @@ public class DataCalculator extends javax.swing.JFrame {
     }
     
     private void addOfficeTableDataOverview() {
-        officesList.forEach(officeData -> {
-            dtmOfficeOverview.addRow(new Object[] { 
-                officeData.get(StandardType.OFFICE),
-                officeData.get(StandardType.SHOWROOM),
+        officeDataOverviewTable.removeAll();
+        for (int index = 0; index < officesList.size(); index++) {
+            OfficeData officeData = officesList.get(index);
+            double sqMtrPerPerson = 0;
+            if(officeData.getType().equals(StandardType.OFFICE)) {
+                sqMtrPerPerson = standardValMap.get(StandardType.SQ_MTR_PER_PERSON_OFFICE).getValue();
+            } else if(officeData.getType().equals(StandardType.SHOWROOM) && officeData.getFloorNumer().equals("0")) {
+                sqMtrPerPerson = standardValMap.get(StandardType.SQ_MTR_PER_PERSON_AT_GROUND).getValue();
+            } else {
+                sqMtrPerPerson = standardValMap.get(StandardType.SQ_MTR_PER_PERSON_ABOVE_GROUND).getValue();
+            }
+            
+            dtmOfficeOverview.addRow(new Object[]{
+                index + 1,
+                officeData.getFloorNumer(),
+                officeData.getType().getValue(),
+                officeData.getArea(),
+                officeData.getNumberOfFloors(),
+                sqMtrPerPerson,
+                officeData.getArea() / sqMtrPerPerson,
+                officeData.getNrOfShifts(),
+                officeData.getArea() * officeData.getNrOfShifts() / sqMtrPerPerson
             });
-        });
+        }
     }
     
     private void addOutdoorDataOverview() {
@@ -2142,7 +2655,6 @@ public class DataCalculator extends javax.swing.JFrame {
         String nrFourBHKs = nrFlats4BHKInput.getText();
         String nrFourAndHalfBHKs = nrFlats4AndHalfBHKInput.getText();
         String nrStudios = nrStudioInput.getText();
-        
 
         boolean valid = true;
         StringBuilder errorMsg = new StringBuilder("Please correct input : \n");
@@ -2153,7 +2665,7 @@ public class DataCalculator extends javax.swing.JFrame {
             errorMsg.append("Empty Name\n");
         }
         try {
-            Integer oneBHKQty = getIntegerVal(nrOneBHKs);
+            Integer oneBHKQty = DataUtils.getIntegerVal(nrOneBHKs);
             flatPerTower.put(StandardType.ONE_BHK, oneBHKQty);
         } catch(InvalidInputException ex) {
             valid = false;
@@ -2161,7 +2673,7 @@ public class DataCalculator extends javax.swing.JFrame {
         }
         
         try {
-            Integer twoBHKQty = getIntegerVal(nrTwoBHKs);
+            Integer twoBHKQty = DataUtils.getIntegerVal(nrTwoBHKs);
             flatPerTower.put(StandardType.TWO_BHK, twoBHKQty);
         } catch(InvalidInputException ex) {
             valid = false;
@@ -2169,7 +2681,7 @@ public class DataCalculator extends javax.swing.JFrame {
         }
         
         try {
-            Integer twoAndHalfBHKQty = getIntegerVal(nrTwoAndHalfBHKs);
+            Integer twoAndHalfBHKQty = DataUtils.getIntegerVal(nrTwoAndHalfBHKs);
             flatPerTower.put(StandardType.TWO_N_HALF_BHK, twoAndHalfBHKQty);
         } catch(InvalidInputException ex) {
             valid = false;
@@ -2177,35 +2689,35 @@ public class DataCalculator extends javax.swing.JFrame {
         }
         
         try {
-            Integer threeBHKQty = getIntegerVal(nrThreeBHKs);
+            Integer threeBHKQty = DataUtils.getIntegerVal(nrThreeBHKs);
             flatPerTower.put(StandardType.THREE_BHK, threeBHKQty);
         } catch(InvalidInputException ex) {
             valid = false;
             errorMsg.append("3 BHK\n");
         }
         try {
-            Integer threeAndHalfBHKQty = getIntegerVal(nrThreeAndHalfBHKs);
+            Integer threeAndHalfBHKQty = DataUtils.getIntegerVal(nrThreeAndHalfBHKs);
             flatPerTower.put(StandardType.THREE_N_HALF_BHK, threeAndHalfBHKQty);
         } catch(InvalidInputException ex) {
             valid = false;
             errorMsg.append("3.5 BHK\n");
         }
         try {
-            Integer fourBHKQty = getIntegerVal(nrFourBHKs);
+            Integer fourBHKQty = DataUtils.getIntegerVal(nrFourBHKs);
             flatPerTower.put(StandardType.FOUR_BHK, fourBHKQty);
         } catch(InvalidInputException ex) {
             valid = false;
             errorMsg.append("4 BHK\n");
         }
         try {
-            Integer fourAndHalfBHKQty = getIntegerVal(nrFourAndHalfBHKs);
+            Integer fourAndHalfBHKQty = DataUtils.getIntegerVal(nrFourAndHalfBHKs);
             flatPerTower.put(StandardType.FOUR_AND_HALF_BHK, fourAndHalfBHKQty);
         } catch(InvalidInputException ex) {
             valid = false;
             errorMsg.append("4.5 BHK\n");
         }
         try {
-            Integer studioQty = getIntegerVal(nrStudios);
+            Integer studioQty = DataUtils.getIntegerVal(nrStudios);
             flatPerTower.put(StandardType.STUDIO, studioQty);
         } catch(InvalidInputException ex) {
             valid = false;
@@ -2226,68 +2738,51 @@ public class DataCalculator extends javax.swing.JFrame {
     }//GEN-LAST:event_addTowerBtnActionPerformed
 
     private void towerDataTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_towerDataTableMouseClicked
-        int row = towerDataTable.rowAtPoint(evt.getPoint());
-        int col = towerDataTable.columnAtPoint(evt.getPoint());
-        if (row >= 0 && col == 9) {
-            int dialogResult = JOptionPane.showConfirmDialog (this, "Are you sure, you want to delete Tower Data?","Warning", JOptionPane.YES_NO_OPTION);
-            if(dialogResult == JOptionPane.YES_OPTION) {
-                towersList.remove(row);
-                dtm.removeRow(row);
-                String towerName = towerNameList.get(row);
-                removeCheckBox(towerName);
-                towerNameList.remove(row);
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
+            int row = towerDataTable.rowAtPoint(evt.getPoint());
+            int col = towerDataTable.columnAtPoint(evt.getPoint());
+            if (row >= 0 && col == 9) {
+                int dialogResult = JOptionPane.showConfirmDialog (this, "Are you sure, you want to delete Tower Data?","Warning", JOptionPane.YES_NO_OPTION);
+                if(dialogResult == JOptionPane.YES_OPTION) {
+                    towersList.remove(row);
+                    dtm.removeRow(row);
+                    String towerName = towerNameList.get(row);
+                    removeCheckBox(towerName);
+                    towerNameList.remove(row);
+                }
+            } else {
+                TowerDataEditor towerDataEditor = new TowerDataEditor(towersList, row, this);
+                towerDataEditor.setVisible(true);
             }
         }
     }//GEN-LAST:event_towerDataTableMouseClicked
 
-    private void addOfficeDataBtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addOfficeDataBtnActionPerformed
-        String officeQty = nrOffice.getText();
-        String showroomQty = nrShowroom.getText();
-
-        boolean valid = true;
-        StringBuilder errorMsg = new StringBuilder("Please correct input : ");
-        TreeMap<StandardType,Integer> commertials = new TreeMap<>();
-        try {
-            Integer oneBHKQty = getIntegerVal(officeQty);
-            commertials.put(StandardType.OFFICE, oneBHKQty);
-        } catch(InvalidInputException ex) {
-            valid = false;
-            errorMsg.append("Office\n");
-        }
-        
-        try {
-            Integer twoBHKQty = getIntegerVal(showroomQty);
-            commertials.put(StandardType.SHOWROOM, twoBHKQty);
-        } catch(InvalidInputException ex) {
-            valid = false;
-            errorMsg.append("Showroom\n");
-        }
-        
-        if(valid) {
-            officesList.add(commertials);
-            addOfficeDataRow(commertials);
-        } else {
-            commertials.clear();
-            JOptionPane.showMessageDialog(this, errorMsg.toString(), "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }//GEN-LAST:event_addOfficeDataBtnActionPerformed
-
-    private void addOfficeDataRow(TreeMap<StandardType, Integer> commertials) {
+    private void addOfficeDataRow(OfficeData officeData) {
         dtmOffice.addRow(new Object[]{
-            commertials.get(StandardType.OFFICE),
-            commertials.get(StandardType.SHOWROOM),
+            dtmOffice.getRowCount()+1,
+            officeData.getFloorNumer(),
+            officeData.getType().getValue(),
+            officeData.getArea(),
+            officeData.getNumberOfFloors(),
+            officeData.getSqMtrPerPerson(),
+            officeData.getNrOfShifts(),
             "<html><div style='text-align:center; color:red'><b> X </b></div></html>"
         });
     }
 
     private void officeDataTableMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_officeDataTableMouseClicked
-        int row = officeDataTable.rowAtPoint(evt.getPoint());
-        int col = officeDataTable.columnAtPoint(evt.getPoint());
-        if (row >= 0 && col == 2) {
-            int dialogResult = JOptionPane.showConfirmDialog (this, "Are you sure, you want to delete Office Data?","Warning", JOptionPane.YES_NO_OPTION);
-            if(dialogResult == JOptionPane.YES_OPTION){
-                officesList.remove(row);
-                dtmOffice.removeRow(row);
+        if (evt.getClickCount() == 2 && evt.getButton() == MouseEvent.BUTTON1) {
+            int row = officeDataTable.rowAtPoint(evt.getPoint());
+            int col = officeDataTable.columnAtPoint(evt.getPoint());
+            if (row >= 0 && col == 7) {
+                int dialogResult = JOptionPane.showConfirmDialog (this, "Are you sure, you want to delete Office Data?","Warning", JOptionPane.YES_NO_OPTION);
+                if(dialogResult == JOptionPane.YES_OPTION){
+                    officesList.remove(row);
+                    dtmOffice.removeRow(row);
+                }
+            } else {
+                OfficeDataEditor officeDataEditor = new OfficeDataEditor(officesList, row, standardValMap, this);
+                officeDataEditor.setVisible(true);
             }
         }
     }//GEN-LAST:event_officeDataTableMouseClicked
@@ -2318,34 +2813,25 @@ public class DataCalculator extends javax.swing.JFrame {
             standardValMap.put(StandardType.SWIMMING_POOL, getUpdatedStandardVal(StandardType.SWIMMING_POOL, peoplePerSwimmingPoolInput.getText()));
             standardValMap.put(StandardType.CLUB_HOUSE, getUpdatedStandardVal(StandardType.CLUB_HOUSE, peoplePerClubHouseInput.getText()));
 
+            standardValMap.put(StandardType.SQ_MTR_PER_PERSON_AT_GROUND, getUpdatedStandardVal(StandardType.SQ_MTR_PER_PERSON_AT_GROUND, sqMtrPerPersonAtGroundInput.getText()));
+            standardValMap.put(StandardType.SQ_MTR_PER_PERSON_ABOVE_GROUND, getUpdatedStandardVal(StandardType.SQ_MTR_PER_PERSON_ABOVE_GROUND, sqMtrPerPersonAboveGroundInput.getText()));
+            standardValMap.put(StandardType.SQ_MTR_PER_PERSON_OFFICE, getUpdatedStandardVal(StandardType.SQ_MTR_PER_PERSON_OFFICE, sqMtrPerPersonOfficeInput.getText()));
+            
             standardValMap.put(StandardType.WATER_DEMAND, getUpdatedStandardVal(StandardType.WATER_DEMAND, stdwaterDemand.getText()));
             standardValMap.put(StandardType.SOLID_WASTE_KG_PERSON_DAY, getUpdatedStandardVal(StandardType.SOLID_WASTE_KG_PERSON_DAY, stdSolidWasteKgPPD.getText()));
-            standardValMap.put(StandardType.SOLID_WASTE_LITER_20_FAMILY, getUpdatedStandardVal(StandardType.SOLID_WASTE_LITER_20_FAMILY, stdSolidWasteLtrPerFamily.getText()));
             standardValMap.put(StandardType.GAS_BANK, getUpdatedStandardVal(StandardType.GAS_BANK, stdGasBank.getText()));
             standardValMap.put(StandardType.SOLAR, getUpdatedStandardVal(StandardType.SOLAR, stdSolar.getText()));
-
-            standardValMap.put(StandardType.TERRACE, getUpdatedStandardVal(StandardType.TERRACE, stdTerrace.getText()));
-            standardValMap.put(StandardType.GREEN_AREA, getUpdatedStandardVal(StandardType.GREEN_AREA, stdGreenArea.getText()));
-            standardValMap.put(StandardType.PAVED_AREA, getUpdatedStandardVal(StandardType.PAVED_AREA, stdPavedArea.getText()));
-            standardValMap.put(StandardType.TOTAL_PLOT_AREA, getUpdatedStandardVal(StandardType.TOTAL_PLOT_AREA, stdTotalPlotArea.getText()));
-            standardValMap.put(StandardType.EXTRA_AREA_TO_BE_CATERED, getUpdatedStandardVal(StandardType.EXTRA_AREA_TO_BE_CATERED, stdExtraAreaCatered.getText()));
-
-            standardValMap.put(StandardType.HEIGHT_OF_TALLEST_BUILDING_FROM_GR, getUpdatedStandardVal(StandardType.HEIGHT_OF_TALLEST_BUILDING_FROM_GR, stdHeightOfTallestBld.getText()));
-            standardValMap.put(StandardType.BASEMENT_AREA, getUpdatedStandardVal(StandardType.BASEMENT_AREA, stdBasementArea.getText()));
-            standardValMap.put(StandardType.RESIDUAL_HEAD_PLUMBING, getUpdatedStandardVal(StandardType.RESIDUAL_HEAD_PLUMBING, stdResidualHeadPlumbing.getText()));
-            standardValMap.put(StandardType.RESIDUAL_HEAD_FIRE, getUpdatedStandardVal(StandardType.RESIDUAL_HEAD_FIRE, stdResidualHeadFire.getText()));
-            standardValMap.put(StandardType.FRICTION_LOSS, getUpdatedStandardVal(StandardType.FRICTION_LOSS, stdFrictionLossInput.getText()));
+            standardValMap.put(StandardType.SOLID_WASTE_DRY_GARBAGE, getUpdatedStandardVal(StandardType.SOLID_WASTE_DRY_GARBAGE, dryGarbageInput.getText()));
+            standardValMap.put(StandardType.SOLID_WASTE_WET_GARBAGE, getUpdatedStandardVal(StandardType.SOLID_WASTE_WET_GARBAGE, wetGarbageInput.getText()));
             
-            standardValMap.put(StandardType.FLOW_TO_SEWER_DOM, getUpdatedStandardVal(StandardType.FLOW_TO_SEWER_DOM, domesticSewerPercent.getText()));
-            standardValMap.put(StandardType.FLOW_TO_SEWER_FLS, getUpdatedStandardVal(StandardType.FLOW_TO_SEWER_FLS, flushSewerPercent.getText()));
-            standardValMap.put(StandardType.RAW_WATER_TANK, getUpdatedStandardVal(StandardType.RAW_WATER_TANK, rawWaterTankPercent.getText()));
-            standardValMap.put(StandardType.DOMESTIC_TANK, getUpdatedStandardVal(StandardType.DOMESTIC_TANK, domesticWaterTankPercent.getText()));
-            standardValMap.put(StandardType.STP_FLUSHING_TANK, getUpdatedStandardVal(StandardType.STP_FLUSHING_TANK, stpFlushingTank.getText()));
-            
-            standardValMap.keySet().forEach(key -> {
-                StandardValues std = standardValMap.get(key);
-                System.out.println(key + ":" +std.getValue());
-            });
+
+            standardValMap.put(StandardType.WATER_DEMAND_COMMERTIAL, getUpdatedStandardVal(StandardType.WATER_DEMAND_COMMERTIAL, stdwaterDemandCommertial.getText()));
+            standardValMap.put(StandardType.SOLID_WASTE_KG_PERSON_DAY_COMMERTIAL, getUpdatedStandardVal(StandardType.SOLID_WASTE_KG_PERSON_DAY_COMMERTIAL, stdSolidWasteKgPPCommertial.getText()));
+            standardValMap.put(StandardType.GAS_BANK_COMMERTIAL, getUpdatedStandardVal(StandardType.GAS_BANK_COMMERTIAL, stdGasBankCommertial.getText()));
+            standardValMap.put(StandardType.SOLAR_COMMERTIAL, getUpdatedStandardVal(StandardType.SOLAR_COMMERTIAL, stdSolarCommertial.getText()));
+            standardValMap.put(StandardType.SOLID_WASTE_DRY_GARBAGE_COMMERTIAL, getUpdatedStandardVal(StandardType.SOLID_WASTE_DRY_GARBAGE_COMMERTIAL, dryGarbageInputCommertial.getText()));
+            standardValMap.put(StandardType.SOLID_WASTE_WET_GARBAGE_COMMERTIAL, getUpdatedStandardVal(StandardType.SOLID_WASTE_WET_GARBAGE_COMMERTIAL, wetGarbageInputCommertial.getText()));
+
             tabbedPane.setEnabledAt(1, true);
             tabbedPane.setSelectedIndex(1);
         } catch (NumberFormatException ex) {
@@ -2353,7 +2839,7 @@ public class DataCalculator extends javax.swing.JFrame {
         }
     }
     
-    private void jCheckBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jCheckBox1ActionPerformed
+    private void modifyStdValsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_modifyStdValsActionPerformed
         JCheckBox chkBox = (JCheckBox) evt.getSource();
         boolean allowEdit = chkBox.isSelected();
         if(allowEdit) {
@@ -2362,7 +2848,7 @@ public class DataCalculator extends javax.swing.JFrame {
             updateStandardFieldEditiability(false);
         }
         
-    }//GEN-LAST:event_jCheckBox1ActionPerformed
+    }//GEN-LAST:event_modifyStdValsActionPerformed
 
     private void peopertTypeSelectorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_peopertTypeSelectorActionPerformed
         // TODO add your handling code here:
@@ -2389,6 +2875,9 @@ public class DataCalculator extends javax.swing.JFrame {
 
     private void addGroupedTowerRow(List<String> groupedTowers) {
         if (!groupedTowers.isEmpty()) {
+            
+//            groupedTowers.forEach(data -> addCheckBoxForTower(data, true));
+            
             groupedTowerNamesList.add(groupedTowers);
             DefaultTableModel model = (DefaultTableModel) towerGroupTable.getModel();
 
@@ -2405,7 +2894,7 @@ public class DataCalculator extends javax.swing.JFrame {
         DefaultTableModel dtm = (DefaultTableModel)towerGroupTable.getModel();
         int rowCnt = dtm.getRowCount();
         for (int i = 0; i < rowCnt; i++) {
-            dtm.removeRow(i);
+            dtm.removeRow(0);
         }
         towerGroupTable.revalidate();
         towerGroupTable.repaint();
@@ -2433,21 +2922,77 @@ public class DataCalculator extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_saveProjectBtnActionPerformed
 
+    private void peopertTypeSelectorItemStateChanged(java.awt.event.ItemEvent evt) {//GEN-FIRST:event_peopertTypeSelectorItemStateChanged
+        // TODO add your handling code here:
+    }//GEN-LAST:event_peopertTypeSelectorItemStateChanged
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        String floorNr = officeFloorNrInput.getText();
+        String type = (String)officeType.getSelectedItem();
+        String officeAreaTxt = officeAreaInput.getText();
+        int nrOfFloors = Integer.parseInt((String)nrFloorInput.getSelectedItem());
+        String nrOfShiftsTxt = nrOfShiftsInput.getText();
+
+        boolean valid = true;
+        OfficeData officeData; 
+        StringBuilder errorMsg = new StringBuilder("Please correct input : ");
+
+        if(type.equals("Office")) {
+            officeData = new OfficeData(getSqMtrPerPerson(floorNr, StandardType.OFFICE));
+            officeData.setType(StandardType.OFFICE);
+        } else {
+            officeData = new OfficeData(getSqMtrPerPerson(floorNr, StandardType.SHOWROOM));
+            officeData.setType(StandardType.SHOWROOM);
+        }
+        
+        officeData.setFloorNumer(floorNr);
+        
+        try {
+            int officeArea = DataUtils.getIntegerVal(officeAreaTxt);
+            officeData.setArea(officeArea);
+        } catch(InvalidInputException ex) {
+            valid = false;
+            errorMsg.append("Area\n");
+        }
+
+        officeData.setNumberOfFloors(nrOfFloors);
+
+        try {
+            float nrOfShifts = Float.parseFloat(nrOfShiftsTxt);
+            officeData.setNrOfShifts(nrOfShifts);
+        } catch(NumberFormatException ex) {
+            valid = false;
+            errorMsg.append("No. of shifts\n");
+        }
+
+        if(valid) {
+            officesList.add(officeData);
+            addOfficeDataRow(officeData);
+        } else {
+            JOptionPane.showMessageDialog(this, errorMsg.toString(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void ohtDomesticTankPercentActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ohtDomesticTankPercentActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_ohtDomesticTankPercentActionPerformed
+
+    private void ohtDomesticTankPercentCommertialActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ohtDomesticTankPercentCommertialActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_ohtDomesticTankPercentCommertialActionPerformed
+
+    private void ohtFireFightingTankCommertialActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ohtFireFightingTankCommertialActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_ohtFireFightingTankCommertialActionPerformed
+
+    private void totalPlotAreaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_totalPlotAreaActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_totalPlotAreaActionPerformed
+
     private void generateWaterDemandPDF() {
         
     }
-    
-    private Integer getIntegerVal(String text) throws InvalidInputException {
-        if(text.isEmpty()){
-            return 0;
-        }
-        try {
-            return Integer.valueOf(text);
-        } catch(NumberFormatException ex){
-            throw new InvalidInputException("unable to convert "+text);
-        }
-    }
-    
+        
     /**
      * @param args the command line arguments
      */
@@ -2471,23 +3016,49 @@ public class DataCalculator extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
-    private javax.swing.JButton addOfficeDataBtn;
     private javax.swing.JButton addTowerBtn;
+    private javax.swing.JTextField basementArea;
     private javax.swing.JButton clearGroupedTowerBtn;
     private javax.swing.JTextField clubHouseAreaInput;
     private javax.swing.JPanel consumptionParamPanel;
+    private javax.swing.JPanel consumptionParamPanel1;
     private javax.swing.JTextField domesticSewerPercent;
-    private javax.swing.JTextField domesticWaterTankPercent;
-    private javax.swing.JTextField flushSewerPercent;
+    private javax.swing.JTextField domesticSewerPercentCommertial;
+    private javax.swing.JTextField dryGarbageInput;
+    private javax.swing.JTextField dryGarbageInputCommertial;
+    private javax.swing.JTextField extraAreaCatered;
+    private javax.swing.JTextField flushingSewerPercent;
+    private javax.swing.JTextField flushingSewerPercentCommertial;
+    private javax.swing.JTextField frictionLossInput;
+    private javax.swing.JTextField greenArea;
     private javax.swing.JButton groupTowers;
+    private javax.swing.JTextField heightOfTallestBld;
     private javax.swing.JPanel inputCriteriaForm;
     private javax.swing.JButton inputCriteriaTabNextBtn;
     private javax.swing.JButton inputDataNextBtn;
     private javax.swing.JPanel inputDataPanel;
-    private javax.swing.JCheckBox jCheckBox1;
+    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel100;
+    private javax.swing.JLabel jLabel101;
+    private javax.swing.JLabel jLabel102;
+    private javax.swing.JLabel jLabel103;
+    private javax.swing.JLabel jLabel104;
+    private javax.swing.JLabel jLabel105;
+    private javax.swing.JLabel jLabel106;
+    private javax.swing.JLabel jLabel107;
+    private javax.swing.JLabel jLabel108;
+    private javax.swing.JLabel jLabel109;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel110;
+    private javax.swing.JLabel jLabel111;
+    private javax.swing.JLabel jLabel112;
+    private javax.swing.JLabel jLabel113;
+    private javax.swing.JLabel jLabel114;
+    private javax.swing.JLabel jLabel115;
+    private javax.swing.JLabel jLabel116;
+    private javax.swing.JLabel jLabel117;
     private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel14;
@@ -2502,7 +3073,13 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel22;
     private javax.swing.JLabel jLabel23;
     private javax.swing.JLabel jLabel24;
+    private javax.swing.JLabel jLabel25;
+    private javax.swing.JLabel jLabel26;
+    private javax.swing.JLabel jLabel27;
+    private javax.swing.JLabel jLabel28;
+    private javax.swing.JLabel jLabel29;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel30;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel40;
     private javax.swing.JLabel jLabel41;
@@ -2538,29 +3115,49 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel69;
     private javax.swing.JLabel jLabel7;
     private javax.swing.JLabel jLabel70;
-    private javax.swing.JLabel jLabel71;
-    private javax.swing.JLabel jLabel72;
-    private javax.swing.JLabel jLabel73;
-    private javax.swing.JLabel jLabel74;
-    private javax.swing.JLabel jLabel75;
-    private javax.swing.JLabel jLabel76;
     private javax.swing.JLabel jLabel77;
     private javax.swing.JLabel jLabel78;
-    private javax.swing.JLabel jLabel79;
     private javax.swing.JLabel jLabel8;
-    private javax.swing.JLabel jLabel80;
+    private javax.swing.JLabel jLabel81;
+    private javax.swing.JLabel jLabel82;
+    private javax.swing.JLabel jLabel83;
+    private javax.swing.JLabel jLabel84;
+    private javax.swing.JLabel jLabel85;
+    private javax.swing.JLabel jLabel86;
+    private javax.swing.JLabel jLabel87;
+    private javax.swing.JLabel jLabel88;
+    private javax.swing.JLabel jLabel89;
     private javax.swing.JLabel jLabel9;
+    private javax.swing.JLabel jLabel90;
+    private javax.swing.JLabel jLabel91;
+    private javax.swing.JLabel jLabel92;
+    private javax.swing.JLabel jLabel93;
+    private javax.swing.JLabel jLabel94;
+    private javax.swing.JLabel jLabel95;
+    private javax.swing.JLabel jLabel96;
+    private javax.swing.JLabel jLabel97;
+    private javax.swing.JLabel jLabel98;
+    private javax.swing.JLabel jLabel99;
     private javax.swing.JLabel jLableStdFrictionLoss;
     private javax.swing.JPanel jPanel1;
+    private javax.swing.JPanel jPanel10;
+    private javax.swing.JPanel jPanel11;
+    private javax.swing.JPanel jPanel12;
+    private javax.swing.JPanel jPanel13;
+    private javax.swing.JPanel jPanel14;
+    private javax.swing.JPanel jPanel15;
+    private javax.swing.JPanel jPanel16;
+    private javax.swing.JPanel jPanel17;
+    private javax.swing.JPanel jPanel18;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
-    private javax.swing.JPanel jPanel7;
     private javax.swing.JPanel jPanel8;
     private javax.swing.JPanel jPanel9;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JScrollPane jScrollPane4;
     private javax.swing.JScrollPane jScrollPane5;
     private javax.swing.JScrollPane jScrollPane6;
@@ -2568,6 +3165,7 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JTextField landscapeAreaInput;
     private javax.swing.JComboBox<String> landscapeAreaWater;
     private javax.swing.JPanel mainPanel;
+    private javax.swing.JCheckBox modifyStdVals;
     private javax.swing.JTextField nrFlats1BHKInput;
     private javax.swing.JTextField nrFlats2BHKInput;
     private javax.swing.JTextField nrFlats2NHalfBHKInput;
@@ -2575,17 +3173,26 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JTextField nrFlats3BHKInput;
     private javax.swing.JTextField nrFlats4AndHalfBHKInput;
     private javax.swing.JTextField nrFlats4BHKInput;
-    private javax.swing.JTextField nrOffice;
-    private javax.swing.JTextField nrShowroom;
+    private javax.swing.JComboBox<String> nrFloorInput;
+    private javax.swing.JTextField nrOfShiftsInput;
     private javax.swing.JTextField nrStudioInput;
+    private javax.swing.JTextField officeAreaInput;
     private javax.swing.JTable officeDataOverviewTable;
     private javax.swing.JTable officeDataTable;
-    private javax.swing.JPanel officePanel;
+    private javax.swing.JTextField officeFloorNrInput;
+    private javax.swing.JPanel officeShowroomPanel;
+    private javax.swing.JComboBox<String> officeType;
+    private javax.swing.JTextField ohtDomesticTankPercent;
+    private javax.swing.JTextField ohtDomesticTankPercentCommertial;
     private javax.swing.JTextField ohtFireFightingTank;
+    private javax.swing.JTextField ohtFireFightingTankCommertial;
+    private javax.swing.JTextField ohtFlushingTank;
+    private javax.swing.JTextField ohtFlushingTankCommertial;
     private javax.swing.JPanel outdoorOverviewPanel;
     private javax.swing.JButton outsideAreaBtn;
     private javax.swing.JPanel outsideAreaPanel;
     private javax.swing.JPanel overviewPanel;
+    private javax.swing.JTextField pavedArea;
     private javax.swing.JTextField pdfLocationInput;
     private javax.swing.JComboBox<String> peopertTypeSelector;
     private javax.swing.JTextField peopleDriverInput;
@@ -2605,28 +3212,26 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JTextField peopleServantInput;
     private javax.swing.JPanel populationCriteriaPanel;
     private javax.swing.JTextField projectNameInput;
-    private javax.swing.JTextField rawWaterTankPercent;
     private javax.swing.JPanel residentialPanel;
+    private javax.swing.JTextField residualHeadFire;
+    private javax.swing.JTextField residualHeadPlumbing;
     private javax.swing.JButton saveProjectBtn;
-    private javax.swing.JTextField stdBasementArea;
-    private javax.swing.JTextField stdExtraAreaCatered;
-    private javax.swing.JTextField stdFrictionLossInput;
+    private javax.swing.JTextField sqMtrPerPersonAboveGroundInput;
+    private javax.swing.JTextField sqMtrPerPersonAtGroundInput;
+    private javax.swing.JTextField sqMtrPerPersonOfficeInput;
     private javax.swing.JTextField stdGasBank;
-    private javax.swing.JTextField stdGreenArea;
-    private javax.swing.JTextField stdHeightOfTallestBld;
-    private javax.swing.JTextField stdPavedArea;
-    private javax.swing.JTextField stdResidualHeadFire;
-    private javax.swing.JTextField stdResidualHeadPlumbing;
+    private javax.swing.JTextField stdGasBankCommertial;
     private javax.swing.JTextField stdSolar;
+    private javax.swing.JTextField stdSolarCommertial;
+    private javax.swing.JTextField stdSolidWasteKgPPCommertial;
     private javax.swing.JTextField stdSolidWasteKgPPD;
-    private javax.swing.JTextField stdSolidWasteLtrPerFamily;
-    private javax.swing.JTextField stdTerrace;
-    private javax.swing.JTextField stdTotalPlotArea;
     private javax.swing.JTextField stdwaterDemand;
-    private javax.swing.JTextField stpFlushingTank;
+    private javax.swing.JTextField stdwaterDemandCommertial;
     private javax.swing.JTextField swimmingAreaInput;
     private javax.swing.JComboBox<String> swimmingPoolCapacity;
     private javax.swing.JTabbedPane tabbedPane;
+    private javax.swing.JTextField terraceArea;
+    private javax.swing.JTextField totalPlotArea;
     private javax.swing.JTable towerDataOveriewTable;
     private javax.swing.JTable towerDataTable;
     private javax.swing.JPanel towerGroupPanel;
@@ -2634,20 +3239,29 @@ public class DataCalculator extends javax.swing.JFrame {
     private javax.swing.JTable towerGroupTable;
     private javax.swing.JTextField towerNameInput;
     private javax.swing.JPanel typePanel;
-    private javax.swing.JTextField ugrFireFightingTank;
+    private javax.swing.JTextField ugtDomesticWaterTankPercent;
+    private javax.swing.JTextField ugtDomesticWaterTankPercentCommertial;
+    private javax.swing.JTextField ugtFireFightingTank;
+    private javax.swing.JTextField ugtFireFightingTankCommertial;
+    private javax.swing.JTextField ugtFlushingTank;
+    private javax.swing.JTextField ugtFlushingTankCommertial;
+    private javax.swing.JTextField ugtRawWaterTankPercent;
+    private javax.swing.JTextField ugtRawWaterTankPercentCommertial;
     private javax.swing.JPanel waterDemandOverviewPanel;
     private javax.swing.JButton waterDemandPDFBtn;
+    private javax.swing.JTextField wetGarbageInput;
+    private javax.swing.JTextField wetGarbageInputCommertial;
     // End of variables declaration//GEN-END:variables
 
     private void addCheckBoxForTower(String towerName) {
         addCheckBoxForTower(towerName, true);
     }
   
-    private void addCheckBoxForTower(String towerName, boolean status){
-        JCheckBox checkbox = new JCheckBox(towerName, false);
+    private void addCheckBoxForTower(String towerName, boolean enabled){
+        JCheckBox checkbox = new JCheckBox(towerName, enabled);
         checkbox.setName(towerName);
         checkbox.setMargin(new Insets(5,5,5,5));
-        checkbox.setEnabled(status);
+        checkbox.setEnabled(enabled);
         towerGroupPanel.add(checkbox);
         towerGroupPanel.revalidate();
         towerGroupPanel.repaint();
@@ -2687,7 +3301,11 @@ public class DataCalculator extends javax.swing.JFrame {
         addRowToTowerTable(towerName, flatPerTower, true);
     }
     
-    private void addRowToTowerTable(String towerName, TreeMap<StandardType,Integer> flatPerTower, boolean checkboxStatus) {
+    private void addRowToTowerTable(String towerName, TreeMap<StandardType,Integer> flatPerTower, boolean addToGroupList) {
+        addRowToTowerTable(towerName, flatPerTower, true, addToGroupList);
+    }
+    
+    private void addRowToTowerTable(String towerName, TreeMap<StandardType,Integer> flatPerTower, boolean checkboxEnabled, boolean addToGroupList) {
         dtm.addRow(new Object[] { 
             towerName,
             flatPerTower.get(StandardType.ONE_BHK),
@@ -2700,9 +3318,268 @@ public class DataCalculator extends javax.swing.JFrame {
             flatPerTower.get(StandardType.STUDIO),
             "<html><div style='text-align:center; color:red'><b> X </b></div></html>"
         });
+        
         towerNameList.add(towerName);
-        addCheckBoxForTower(towerName, checkboxStatus);
+        if(addToGroupList) {
+            addCheckBoxForTower(towerName, checkboxEnabled);
+        }
     }
 
+    private void initTowerDataOverview() {
+        dtmTowerDataOverview.addColumn("<html><b>Name</b></html>");
+        dtmTowerDataOverview.addColumn("<html><b>1 BHK</b></html>");
+        dtmTowerDataOverview.addColumn("<html><b>2 BHK</b></html>");
+        dtmTowerDataOverview.addColumn("<html><b>2.5 BHK</b></html>");
+        dtmTowerDataOverview.addColumn("<html><b>3 BHK</b></html>");
+        dtmTowerDataOverview.addColumn("<html><b>3.5 BHK</b></html>");
+        dtmTowerDataOverview.addColumn("<html><b>4 BHK</b></html>");
+        dtmTowerDataOverview.addColumn("<html><b>4.5 BHK</b></html>");
+        dtmTowerDataOverview.addColumn("<html><b>Studio</b></html>");
+    }
+
+    private void initOfficeDataOverview() {
+        dtmOfficeOverview.addColumn("<html><div style='height:25px'><b>Sr.</b></div></html>");
+        dtmOfficeOverview.addColumn("<html><div style='height:25px'><b>Floor Nr</b></div></html>");
+        dtmOfficeOverview.addColumn("<html><div style='height:25px'><b>Type of Area</b></div></html>");
+        dtmOfficeOverview.addColumn("<html><div style='height:25px'><b>Area</b></div></html>");
+        dtmOfficeOverview.addColumn("<html><div style='height:25px'><b>No of floors</b></div></html>");
+        dtmOfficeOverview.addColumn("<html><div style='height:25px'><b>Sq. Mtr. Per Person </b></div></html>");
+        dtmOfficeOverview.addColumn("<html><div style='height:25px'><b>Occupancy</b></div></html>");
+        dtmOfficeOverview.addColumn("<html><div style='height:25px'><b>No. of Shifts</b></div></html>");
+        dtmOfficeOverview.addColumn("<html><div style='height:25px'><b>Total Occupancy </b></div></html>");
+    }
+
+    private void initPanelSelector() {
+        peopertTypeSelector.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JComboBox cb = (JComboBox) e.getSource();
+                String type = (String) cb.getSelectedItem();
+                if(type.equals(TYPE_RESIDENTIAL)) {
+                    officeShowroomPanel.setVisible(false);
+                    residentialPanel.setVisible(true);
+                } else {
+                    residentialPanel.setVisible(false);
+                    officeShowroomPanel.setVisible(true);
+                }
+            }
+        });
+    }
+
+    private void initButtons() {
+        try {
+            URL imageUrl = DataCalculator.class.getResource("/images/saveBtnIcon2.png");
+            ImageIcon icon = new ImageIcon(imageUrl);
+            saveProjectBtn.setIcon(icon);
+            saveProjectBtn.setText("");
+        } catch (Exception e) {
+            log.error("save button icon failed "+e.getMessage());
+        }
+    }
+
+    @Override
+    public void onSave(TowerData towerData, int index) {
+
+        towersList.remove(index);
+        towersList.add(index, towerData);
+
+        towerDataTable.removeAll();
+        while (dtm.getRowCount() > 0) {
+            dtm.removeRow(dtm.getRowCount() - 1);
+        }
+        
+        for (TowerData data : towersList) {
+            addRowToTowerTable(data.getName(), data.getFlatsData(), false);
+        }
+    }
+
+    @Override
+    public void onSaveOfficeData(OfficeData officeData, int index) {
+        officesList.remove(index);
+        officesList.add(index, officeData);
+
+        officeDataTable.removeAll();
+        while (dtmOffice.getRowCount() > 0) {
+            dtmOffice.removeRow(dtmOffice.getRowCount() - 1);
+        }
+        
+        for (OfficeData data : officesList) {
+            addOfficeDataRow(data);
+        }
+    }
+
+    public int getSqMtrPerPerson(String floorNr, StandardType type) {
+        if(type.equals(StandardType.OFFICE)){
+            return (int) standardValMap.get(StandardType.SQ_MTR_PER_PERSON_OFFICE).getValue();
+        } else {
+            if(floorNr.toLowerCase().contains("ground")){
+                return (int) standardValMap.get(StandardType.SQ_MTR_PER_PERSON_AT_GROUND).getValue();
+            } else {
+                try {
+                    int flrNr = Integer.parseInt(floorNr);
+                    if(flrNr > 0) {
+                        return (int) standardValMap.get(StandardType.SQ_MTR_PER_PERSON_ABOVE_GROUND).getValue();
+                    } else {
+                        return (int) standardValMap.get(StandardType.SQ_MTR_PER_PERSON_AT_GROUND).getValue();
+                    }
+                } catch(NumberFormatException ex) {
+                    log.error("error per sqr calculation : ",ex);
+                }
+                return (int) standardValMap.get(StandardType.SQ_MTR_PER_PERSON_ABOVE_GROUND).getValue();
+            }
+        }
+    }
+
+    private boolean validateAndSetInputs() {
+        StringBuilder errorMsg = new StringBuilder("Please fix input :\n");
+        //ugr
+        float ugtDomesticWaterTankPercentVal;
+        float ugtRawWaterTankPercentVal;
+        float ugtFireFightingTankVal;
+        int ugtFlushingTankVal;
+        //OHT
+        float ohtDomesticTankPercentVal;
+        float ohtFireFightingTankVal;
+        float ohtFlushingTankVal;
+        //STP
+        float domesticSewerPercentVal;
+        float flushSewerPercentVal;
+        
+        //ugr
+        float ugtDomesticWaterTankPercentCommertialVal;
+        float ugtRawWaterTankPercentCommertialVal;
+        float ugtFireFightingTankCommertialVal;
+        int ugtFlushingTankCommertialVal;
+        //OHT
+        float ohtDomesticTankPercentCommertialVal;
+        float ohtFireFightingTankCommertialVal;
+        float ohtFlushingTankCommertialVal;
+        //STP
+        float domesticSewerPercentCommertialVal;
+        float flushSewerPercentCommertialVal;
+        
+        //Fire fighting
+        float heightOfTallestBldVal;
+        float basementAreaVal;
+        float residualHeadPlumbingVal;
+        float residualHeadFireVal;
+        float frictionLossInputVal;
+        //plot area
+        float terraceAreaVal;
+        float greenAreaVal;
+        float pavedAreaVal;
+        float totalPlotAreaVal;
+        float extraAreaCateredVal;
+        
+        try {
+            //UGTCapacity
+            ugtDomesticWaterTankPercentVal = getFloatValue(ugtDomesticWaterTankPercent.getText(), errorMsg, "UGR : Domestic Water Tank %");
+            ugtRawWaterTankPercentVal = getFloatValue(ugtRawWaterTankPercent.getText(), errorMsg, "UGR :Raw water tank %");
+            ugtFireFightingTankVal = getFloatValue(ugtFireFightingTank.getText(), errorMsg, "UGT : Fire fighing tank %");
+            ugtFlushingTankVal = (int)getFloatValue(ugtFlushingTank.getText(), errorMsg, "UGT : Flusing tank val");
+            //OHT
+            ohtDomesticTankPercentVal = getFloatValue(ohtDomesticTankPercent.getText(), errorMsg, "OHT : Domestic tank %");
+            ohtFireFightingTankVal = getFloatValue(ohtFireFightingTank.getText(), errorMsg, "OHT : Fire Fighting tank ");
+            ohtFlushingTankVal = getFloatValue(ohtFlushingTank.getText(), errorMsg, "OHT : Flushing tank ");
+            //STP
+            domesticSewerPercentVal = getFloatValue(domesticSewerPercent.getText(), errorMsg, "STP : Domestic sewer ");
+            flushSewerPercentVal = getFloatValue(flushingSewerPercent.getText(), errorMsg, "STP : Flushing sewer ");
+
+            //UGTCapacity commertial
+            ugtDomesticWaterTankPercentCommertialVal = getFloatValue(ugtRawWaterTankPercentCommertial.getText(), errorMsg, "UGR Commertial: Domestic Water Tank %");
+            ugtRawWaterTankPercentCommertialVal = getFloatValue(ugtRawWaterTankPercent.getText(), errorMsg, "UGR Commertial:Raw water tank %");
+            ugtFireFightingTankCommertialVal = getFloatValue(ugtFireFightingTankCommertial.getText(), errorMsg, "UGT Commertial: Fire fighing tank %");
+            ugtFlushingTankCommertialVal = (int)getFloatValue(ugtFlushingTankCommertial.getText(), errorMsg, "UGT Commertial: Flusing tank val");
+            //OHT
+            ohtDomesticTankPercentCommertialVal = getFloatValue(ohtDomesticTankPercentCommertial.getText(), errorMsg, "OHT Commertial: Domestic tank %");
+            ohtFireFightingTankCommertialVal = getFloatValue(ohtFireFightingTankCommertial.getText(), errorMsg, "OHT Commertial: Fire Fighting tank ");
+            ohtFlushingTankCommertialVal = getFloatValue(ohtFlushingTankCommertial.getText(), errorMsg, "OHT Commertial: Flushing tank ");
+            //STP
+            domesticSewerPercentCommertialVal = getFloatValue(domesticSewerPercentCommertial.getText(), errorMsg, "STP Commertial: Domestic sewer ");
+            flushSewerPercentCommertialVal = getFloatValue(flushingSewerPercentCommertial.getText(), errorMsg, "STP Commertial: Flushing sewer ");
+
+            //Fire fighting
+            heightOfTallestBldVal = getFloatValue(heightOfTallestBld.getText(), errorMsg, "Height of tallest building");
+            basementAreaVal = getFloatValue(basementArea.getText(), errorMsg, "Basement Area");
+            residualHeadPlumbingVal = getFloatValue(residualHeadPlumbing.getText(), errorMsg, "Residual head plumbing");
+            residualHeadFireVal = getFloatValue(residualHeadFire.getText(), errorMsg, "Residual head fire");
+            frictionLossInputVal = getFloatValue(frictionLossInput.getText(), errorMsg, "Friction loss");
+
+            //plot area
+            terraceAreaVal = getFloatValue(terraceArea.getText(), errorMsg, "Terrace Area");
+            greenAreaVal = getFloatValue(greenArea.getText(), errorMsg, "Green Area");
+            pavedAreaVal = getFloatValue(pavedArea.getText(), errorMsg, "Paved Area");
+            totalPlotAreaVal = getFloatValue(totalPlotArea.getText(), errorMsg, "Total Plot Area");
+            extraAreaCateredVal = getFloatValue(extraAreaCatered.getText(), errorMsg, "Extra Area Catered");
+            
+            UGTCapacity ugtCapacityResidential = new UGTCapacity(ugtDomesticWaterTankPercentVal, ugtRawWaterTankPercentVal, ugtFireFightingTankVal, ugtFlushingTankVal);
+            OHTCapacity ohtCapacityResidential = new OHTCapacity(ohtDomesticTankPercentVal, ohtFireFightingTankVal, ohtFlushingTankVal);
+            STPCapacity stpCapacityResidential = new STPCapacity(domesticSewerPercentVal, flushSewerPercentVal);
+            
+            UGTCapacity ugtCapacityCommertial = new UGTCapacity(ugtDomesticWaterTankPercentCommertialVal, ugtRawWaterTankPercentCommertialVal, ugtFireFightingTankCommertialVal, ugtFlushingTankCommertialVal);
+            OHTCapacity ohtCapacityCommertial = new OHTCapacity(ohtDomesticTankPercentCommertialVal, ohtFireFightingTankCommertialVal, ohtFlushingTankCommertialVal);
+            STPCapacity stpCapacityCommertial = new STPCapacity(domesticSewerPercentCommertialVal, flushSewerPercentCommertialVal);
+            
+            capacityDetailsResidential = new CapacityDetails(ugtCapacityResidential, ohtCapacityResidential, stpCapacityResidential);
+            capacityDetailsCommertial = new CapacityDetails(ugtCapacityCommertial, ohtCapacityCommertial, stpCapacityCommertial);
+
+            fireFightingDetails = new FireFightingDetails(heightOfTallestBldVal, basementAreaVal, residualHeadPlumbingVal, residualHeadFireVal, frictionLossInputVal);
+            plotArea = new PlotArea(terraceAreaVal, greenAreaVal, pavedAreaVal, totalPlotAreaVal, extraAreaCateredVal);
+            
+            return true;
+        } catch(NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, errorMsg.toString(), "Error", JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+    }
+
+    private float getFloatValue(String input, StringBuilder sb, String errorMsg) {
+        try {
+            return Float.parseFloat(input);
+        } catch (NumberFormatException ex) {
+            sb.append(errorMsg).append("\n");
+            throw new NumberFormatException(input);
+        }
+    }
+
+    private void setOtherInputs(PdfData projectData) {
+        ugtDomesticWaterTankPercent.setText(String.valueOf(projectData.getCapacityDetailsResidential().getuGTCapacity().getDomesticTank()));
+        ugtFlushingTank.setText(String.valueOf(projectData.getCapacityDetailsResidential().getuGTCapacity().getFlushingTank()));
+        ugtRawWaterTankPercent.setText(String.valueOf(projectData.getCapacityDetailsResidential().getuGTCapacity().getRawWaterTank()));
+        ugtFireFightingTank.setText(String.valueOf(projectData.getCapacityDetailsResidential().getuGTCapacity().getFireFightingTank()));
+        
+        ohtDomesticTankPercent.setText(String.valueOf(projectData.getCapacityDetailsResidential().getoHTCapacity().getDomesticTank()));
+        ohtFlushingTank.setText(String.valueOf(projectData.getCapacityDetailsResidential().getoHTCapacity().getFlushingTank()));
+        ohtFireFightingTank.setText(String.valueOf(projectData.getCapacityDetailsResidential().getoHTCapacity().getFireFightingTank()));
+        
+        domesticSewerPercent.setText(String.valueOf(projectData.getCapacityDetailsResidential().getsTPCapacity().getDomesticFlow()));
+        flushingSewerPercent.setText(String.valueOf(projectData.getCapacityDetailsResidential().getsTPCapacity().getFlushinhFlow()));
+        //commertial
+        ugtDomesticWaterTankPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getuGTCapacity().getDomesticTank()));
+        ugtFlushingTankCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getuGTCapacity().getFlushingTank()));
+        ugtRawWaterTankPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getuGTCapacity().getRawWaterTank()));
+        ugtFireFightingTankCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getuGTCapacity().getFireFightingTank()));
+        
+        ohtDomesticTankPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getoHTCapacity().getDomesticTank()));
+        ohtFlushingTankCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getoHTCapacity().getFlushingTank()));
+        ohtFireFightingTankCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getoHTCapacity().getFireFightingTank()));
+        
+        domesticSewerPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getsTPCapacity().getDomesticFlow()));
+        flushingSewerPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getsTPCapacity().getFlushinhFlow()));
+    
+        //fireFighting
+        heightOfTallestBld.setText(String.valueOf(projectData.getFireFightingDetails().getHeightOfTallestBuilding()));
+        residualHeadPlumbing.setText(String.valueOf(projectData.getFireFightingDetails().getResidualHeadPlumbing()));
+        residualHeadFire.setText(String.valueOf(projectData.getFireFightingDetails().getResidualHeadFire()));
+        frictionLossInput.setText(String.valueOf(projectData.getFireFightingDetails().getFrictionLoss()));
+        basementArea.setText(String.valueOf(projectData.getFireFightingDetails().getBasementArea()));
+        
+        //plot area
+        terraceArea.setText(String.valueOf(projectData.getPlotArea().getTerrace()));
+        greenArea.setText(String.valueOf(projectData.getPlotArea().getGreenArea()));
+        pavedArea.setText(String.valueOf(projectData.getPlotArea().getPavedArea()));
+        totalPlotArea.setText(String.valueOf(projectData.getPlotArea().getTotalAreaPlot()));
+        extraAreaCatered.setText(String.valueOf(projectData.getPlotArea().getExtraAreaCatered()));
+    }
 
 }

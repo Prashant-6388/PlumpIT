@@ -48,7 +48,7 @@ class WatermarkPageEvent extends PdfPageEventHelper {
         content.endText();
         content.restoreState();
         
-         // Draw footer line
+        // Draw footer line
         content = writer.getDirectContent();
         content.saveState();
         content.setLineWidth(1);

@@ -98,13 +98,12 @@ public class ConfigXMLGenerator {
         StandardValues solidWasterPerKGPersonDayCriteria =  new StandardValues( 0.312, false, "lpcd");
         standardValMap.put(StandardType.SOLID_WASTE_KG_PERSON_DAY,solidWasterPerKGPersonDayCriteria);
         StandardValues solidWasterLtrPer20FamilyCriteria =  new StandardValues(65.9, false, "lpcd");
-        standardValMap.put(StandardType.SOLID_WASTE_LITER_20_FAMILY, solidWasterLtrPer20FamilyCriteria);
         StandardValues gasBankCriteria =  new StandardValues(135, false, "lpcd");
         standardValMap.put(StandardType.GAS_BANK, gasBankCriteria);
         StandardValues solarCriteria =  new StandardValues( 135, false, "lpcd");
         standardValMap.put(StandardType.SOLAR,solarCriteria);
         
-        StandardValues terraceCriteria =  new StandardValues(135, false, "lpcd");
+        /*StandardValues terraceCriteria =  new StandardValues(135, false, "lpcd");
         standardValMap.put(StandardType.TERRACE, terraceCriteria);
         StandardValues greenAreaCriteria =  new StandardValues( 135, false, "lpcd");
         standardValMap.put(StandardType.GREEN_AREA,greenAreaCriteria);
@@ -124,7 +123,7 @@ public class ConfigXMLGenerator {
         StandardValues residentialHeadFireCriteria =  new StandardValues( 135, false, "lpcd");
         standardValMap.put(StandardType.RESIDUAL_HEAD_FIRE,residentialHeadFireCriteria);
         StandardValues frictionLossCriteria =  new StandardValues(135, false, "lpcd");
-        standardValMap.put(StandardType.FRICTION_LOSS, frictionLossCriteria);
+        standardValMap.put(StandardType.FRICTION_LOSS, frictionLossCriteria);*/
         
         /*List<StandardValues> list = new ArrayList<>();
         list.add(twoBHKCriteria);
