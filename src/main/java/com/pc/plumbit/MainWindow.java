@@ -5,17 +5,10 @@
 package com.pc.plumbit;
 
 import com.formdev.flatlaf.FlatLightLaf;
-import com.pc.initializer.DataInitializer;
-import com.pc.plumbit.model.PdfData;
-import com.thoughtworks.xstream.XStream;
 import java.awt.Dimension;
-import java.awt.HeadlessException;
 import java.awt.Toolkit;
-import java.io.File;
-import javax.swing.JFileChooser;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +50,7 @@ public class MainWindow extends javax.swing.JFrame {
         labelCompanyName = new javax.swing.JLabel();
         labelEmail = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
+        jPanel1 = new javax.swing.JPanel();
         jMenuBar1 = new javax.swing.JMenuBar();
         jMenu1 = new javax.swing.JMenu();
         menuItemNew = new javax.swing.JMenuItem();
@@ -116,12 +110,25 @@ public class MainWindow extends javax.swing.JFrame {
         menuWindowPanelLayout.setHorizontalGroup(
             menuWindowPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(menuWindowPanelLayout.createSequentialGroup()
-                .addComponent(contactPane, javax.swing.GroupLayout.PREFERRED_SIZE, 570, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(contactPane, javax.swing.GroupLayout.PREFERRED_SIZE, 885, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, Short.MAX_VALUE))
         );
         menuWindowPanelLayout.setVerticalGroup(
             menuWindowPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(contactPane, javax.swing.GroupLayout.DEFAULT_SIZE, 306, Short.MAX_VALUE)
+            .addGroup(menuWindowPanelLayout.createSequentialGroup()
+                .addComponent(contactPane, javax.swing.GroupLayout.PREFERRED_SIZE, 550, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(0, 0, Short.MAX_VALUE))
+        );
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 885, Short.MAX_VALUE)
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGap(0, 550, Short.MAX_VALUE)
         );
 
         jMenuBar1.setBackground(javax.swing.UIManager.getDefaults().getColor("Actions.Blue"));
@@ -182,10 +189,14 @@ public class MainWindow extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(menuWindowPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addComponent(menuWindowPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addComponent(jPanel1, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -253,6 +264,7 @@ public class MainWindow extends javax.swing.JFrame {
     private javax.swing.JMenu jMenu1;
     private javax.swing.JMenu jMenu2;
     private javax.swing.JMenuBar jMenuBar1;
+    private javax.swing.JPanel jPanel1;
     private javax.swing.JLabel labelCompanyName;
     private javax.swing.JLabel labelEmail;
     private javax.swing.JLabel labelPhone;
@@ -269,21 +281,39 @@ public class MainWindow extends javax.swing.JFrame {
     }
 
     private void openSavedProject() {
-        try {
-            JFileChooser fileChooser = new JFileChooser();
-            FileNameExtensionFilter fileFilter = new FileNameExtensionFilter("pscs","pscs");
-            fileChooser.setFileFilter(fileFilter);
-            fileChooser.setCurrentDirectory(new File("D:/Programming/GUI/NB/PlumbIT/pdf"));
-            int result = fileChooser.showOpenDialog(this);
-            if (result == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = fileChooser.getSelectedFile();
-                XStream xstream = DataInitializer.getXstream();
-                PdfData projectData = (PdfData)xstream.fromXML(selectedFile);
-                DataCalculator dc = new DataCalculator(projectData);
-                dc.setVisible(true);
+        ProjectLoader projectLoader = new ProjectLoader();
+        projectLoader.setVisible(true);
+        /*try {
+            File selectedFile=new File("");
+            String location = "";
+            String appDataFolder = System.getenv("APPDATA");
+            if (!appDataFolder.isEmpty() && !appDataFolder.isBlank()) {
+                List<String> projectFileNames = new ArrayList<>();
+                Path dir = Paths.get(appDataFolder);
+                try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir, "*.xml")) {
+                    for (Path entry : stream) {
+                        projectFileNames.add(entry.getFileName().toString());
+                    }
+                } catch (IOException e) {
+                    log.error("Unable to read project folder", e);
+                }
+                selectedFile = new File("");
+            } else {
+                JFileChooser fileChooser = new JFileChooser();
+                FileNameExtensionFilter fileFilter = new FileNameExtensionFilter("pscs", "pscs");
+                fileChooser.setFileFilter(fileFilter);
+                fileChooser.setCurrentDirectory(new File("D:/Programming/GUI/NB/PlumbIT/pdf"));
+                int result = fileChooser.showOpenDialog(this);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    selectedFile = fileChooser.getSelectedFile();
+                }
             }
-        }catch(HeadlessException e) {
-            log.error("Unable to open project file."+e);
-        }
+            XStream xstream = DataInitializer.getXstream();
+            PdfData projectData = (PdfData) xstream.fromXML(selectedFile);
+            DataCalculator dc = new DataCalculator(projectData);
+            dc.setVisible(true);
+        } catch (HeadlessException e) {
+            log.error("Unable to open project file.", e);
+        }*/
     }
 }

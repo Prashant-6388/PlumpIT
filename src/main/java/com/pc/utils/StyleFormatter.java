@@ -6,7 +6,6 @@ package com.pc.utils;
 
 import java.awt.Color;
 import java.util.List;
-import javax.swing.JLabel;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableCellRenderer;
 

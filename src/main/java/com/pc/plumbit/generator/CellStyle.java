@@ -18,7 +18,8 @@ public class CellStyle {
     private int horizontalAlignment;
     private int rotation;
     private Color backgroundColor; 
-
+    private CellPadding padding;
+    
     public CellStyle() {
         this(1, 1);
     }
@@ -99,5 +100,15 @@ public class CellStyle {
     public void setBackgroundColor(Color backgroundColor) {
         this.backgroundColor = backgroundColor;
     }
+
+    public CellPadding getPadding() {
+        return padding;
+    }
+
+    public void setPadding(CellPadding padding) {
+        this.padding = padding;
+    }
+
+    
 }
 

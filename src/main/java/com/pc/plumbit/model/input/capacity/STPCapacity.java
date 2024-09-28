@@ -10,11 +10,11 @@ package com.pc.plumbit.model.input.capacity;
  */
 public class STPCapacity {
     private float domesticFlow;
-    private float flushinhFlow;
+    private float flushingFlow;
 
     public STPCapacity(float domesticFlow, float flushinhFlow) {
         this.domesticFlow = domesticFlow;
-        this.flushinhFlow = flushinhFlow;
+        this.flushingFlow = flushinhFlow;
     }
 
     public float getDomesticFlow() {
@@ -25,12 +25,12 @@ public class STPCapacity {
         this.domesticFlow = domesticFlow;
     }
 
-    public float getFlushinhFlow() {
-        return flushinhFlow;
+    public float getFlushingFlow() {
+        return flushingFlow;
     }
 
     public void setFlushinhFlow(float flushinhFlow) {
-        this.flushinhFlow = flushinhFlow;
+        this.flushingFlow = flushinhFlow;
     }
     
 }

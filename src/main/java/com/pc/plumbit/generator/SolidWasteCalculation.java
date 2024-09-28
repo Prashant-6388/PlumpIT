@@ -12,6 +12,8 @@ import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import com.pc.plumbit.enums.StandardType;
+import static com.pc.plumbit.enums.StandardType.SOLID_WASTE_DRY_GARBAGE;
+import static com.pc.plumbit.enums.StandardType.SOLID_WASTE_WET_GARBAGE;
 import static com.pc.plumbit.generator.PDFUtils.addTableCell;
 import static com.pc.plumbit.generator.PDFUtils.courierBold;
 import static com.pc.plumbit.generator.PDFUtils.addTableHeader;
@@ -60,7 +62,10 @@ public class SolidWasteCalculation {
         return false;
     }
 
-    public static void createSolidWasteHeaderTable(Document document, PdfData pdfData, int dryGarbagePercent, int wetGarbagePercent) {
+    public static void createSolidWasteHeaderTable(Document document, PdfData pdfData) {
+        int dryGarbagePercent = DataFormater.getNormalizedStandardValue(pdfData.getStandardValMap().get(SOLID_WASTE_DRY_GARBAGE));
+        int wetGarbagePercent = DataFormater.getNormalizedStandardValue(pdfData.getStandardValMap().get(SOLID_WASTE_WET_GARBAGE));
+        
         float[] columnDefinitionSize = {40F, 120F, 120F, 120F, 120F, 140F};
         
         PdfPCell cell = null;

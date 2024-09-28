@@ -4,211 +4,626 @@
  */
 package com.pc.plumbit.generator;
 
+import java.util.List;
+import java.util.ArrayList;
+import com.pc.plumbit.enums.StandardType;
+import com.pc.plumbit.model.commertial.CommertialWaterDemandRowData;
+import com.pc.plumbit.model.PdfData;
+import com.pc.plumbit.model.StandardValues;
+import com.pc.plumbit.model.domestic.TowerWaterDemandRowData;
+import com.pc.plumbit.model.input.OfficeData;
+import com.pc.plumbit.model.input.TowerData;
+import com.pc.utils.DataFormater;
+import java.util.HashMap;
+import java.util.Optional;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+
 /**
  *
  * @author Prashant
  */
 public class WaterDemandCalculator {
-    /*    private static void createMiscellaneousTable(Document document, TreeMap<ConsumptionType, Integer> miscAreaMap) {
-        createTableRow(document, "MISCELLANEOUS ", 12, courierBold, Element.ALIGN_CENTER, Element.ALIGN_CENTER, false, false);
-        float[] columnDefinitionSize = {30F, 80F, 50F, 65F, 35F, 50F, 40F, 35F, 50F, 40F, 50F, 60F};
-        PdfPTable table = new PdfPTable(columnDefinitionSize);
-        table.setWidthPercentage(100);
-        int landScapeArea = addLandScapeRow(table, miscAreaMap);
-        double swimmingPoolArea = addSwimmingPoolRow(table, miscAreaMap);
-        int clubHouseArea = addClubHouseRow(table, miscAreaMap);
-        document.add(table);
+    
+    public static final String DESCRIPTION_ROW_TOTAL = "Total";
+
+    public static HashMap<String, List<TowerWaterDemandRowData>> calculateWaterDemandForTowers(PdfData pdfData) {
+        HashMap<String, List<TowerWaterDemandRowData>> towerDemandList = new HashMap<>();
+        List<TowerData> towersList = pdfData.getTowersList();
+        HashMap<StandardType, StandardValues> standardValMap = pdfData.getStandardValMap();
+        
+        //same value of all towers
+        float domesticToSewerPercentage = pdfData.getCapacityDetailsResidential().getsTPCapacity().getDomesticFlow();
+        float flushingToSewerPercentage = pdfData.getCapacityDetailsResidential().getsTPCapacity().getFlushingFlow();
+        
+        for (int i = 0; i < towersList.size(); i++) {
+            TowerData towerData = towersList.get(i);
+            List<TowerWaterDemandRowData> perTowerWaterDemandList = getWaterDemandForTower(towerData, standardValMap, domesticToSewerPercentage, flushingToSewerPercentage);
+            TowerWaterDemandRowData totalWaterDemandForTower = getTotalWaterDemandForTower(perTowerWaterDemandList);
+            perTowerWaterDemandList.add(totalWaterDemandForTower);
+            towerDemandList.put(towerData.getName(), perTowerWaterDemandList);
+        }
+        return towerDemandList;
+    }
+    
+    public static float calculateTotalLpdaForTowers(PdfData pdfData) {
+       HashMap<String, List<TowerWaterDemandRowData>> towersDataRowMap = calculateWaterDemandForTowers(pdfData);
+       float totalLpda=0;
+       for(String key : towersDataRowMap.keySet()) {
+           List<TowerWaterDemandRowData> towersFlatDataRows = towersDataRowMap.get(key);
+           Optional<TowerWaterDemandRowData> totalRow = towersFlatDataRows.stream()
+                   .filter(towerRow -> towerRow.getDescription().equals(DESCRIPTION_ROW_TOTAL))
+                   .findFirst();
+           if(totalRow.isPresent()) {
+               TowerWaterDemandRowData totalDataRow = totalRow.get();
+               totalLpda += totalDataRow.getLpda();
+           }
+       }
+       return totalLpda;
+    }
+    
+    public static float calculateTotalLpdaByTowerName(PdfData pdfData, String towerName) {
+        Optional<TowerData> tower = pdfData.getTowersList().stream().filter(towerData -> towerData.getName().equals(towerName)).findFirst();
+        if(tower.isPresent()) {
+            float domesticToSewerPercentage = pdfData.getCapacityDetailsResidential().getsTPCapacity().getDomesticFlow();
+            float flushingToSewerPercentage = pdfData.getCapacityDetailsResidential().getsTPCapacity().getFlushingFlow();
+            TowerData towerData = tower.get();
+            List<TowerWaterDemandRowData> perTowerWaterDemandList = getWaterDemandForTower(towerData, pdfData.getStandardValMap(), domesticToSewerPercentage, flushingToSewerPercentage);
+            TowerWaterDemandRowData totalWaterDemandForTower = getTotalWaterDemandForTower(perTowerWaterDemandList);
+            return totalWaterDemandForTower.getLpda();
+        } else {
+            return 0;
+        }
+    }
+    
+    public static TowerWaterDemandRowData calculateTotalDataRowForTower(PdfData pdfData, String towerName) {
+    Optional<TowerData> tower = pdfData.getTowersList().stream().filter(towerData -> towerData.getName().equals(towerName)).findFirst();
+    if(tower.isPresent()) {
+        float domesticToSewerPercentage = pdfData.getCapacityDetailsResidential().getsTPCapacity().getDomesticFlow();
+        float flushingToSewerPercentage = pdfData.getCapacityDetailsResidential().getsTPCapacity().getFlushingFlow();
+        TowerData towerData = tower.get();
+        List<TowerWaterDemandRowData> perTowerWaterDemandList = getWaterDemandForTower(towerData, pdfData.getStandardValMap(), domesticToSewerPercentage, flushingToSewerPercentage);
+        TowerWaterDemandRowData totalWaterDemandForTower = getTotalWaterDemandForTower(perTowerWaterDemandList);
+        return totalWaterDemandForTower;
+    } else {
+        return null;
+    }
+}
+
+    public static float calculateTotalLpdbForTowers(PdfData pdfData) {
+       HashMap<String, List<TowerWaterDemandRowData>> towersDataRowMap = calculateWaterDemandForTowers(pdfData);
+       float totalLpda=0;
+       for(String key : towersDataRowMap.keySet()) {
+           List<TowerWaterDemandRowData> towersFlatDataRows = towersDataRowMap.get(key);
+           Optional<TowerWaterDemandRowData> totalRow = towersFlatDataRows.stream()
+                   .filter(towerRow -> towerRow.getDescription().equals(DESCRIPTION_ROW_TOTAL))
+                   .findFirst();
+           if(totalRow.isPresent()) {
+               TowerWaterDemandRowData totalDataRow = totalRow.get();
+               totalLpda += totalDataRow.getLpdb();
+           }
+       }
+       return totalLpda;
+    }
+    
+    public static float calculateTotalFlowToSewerForTowers(PdfData pdfData) {
+       HashMap<String, List<TowerWaterDemandRowData>> towersDataRowMap = calculateWaterDemandForTowers(pdfData);
+       float totalFlowToSewer=0;
+       for(String key : towersDataRowMap.keySet()) {
+           List<TowerWaterDemandRowData> towersFlatDataRows = towersDataRowMap.get(key);
+           Optional<TowerWaterDemandRowData> totalRow = towersFlatDataRows.stream()
+                   .filter(towerRow -> towerRow.getDescription().equals(DESCRIPTION_ROW_TOTAL))
+                   .findFirst();
+           if(totalRow.isPresent()) {
+               TowerWaterDemandRowData totalDataRow = totalRow.get();
+               totalFlowToSewer += totalDataRow.getTotalFlowToSewer();
+           }
+       }
+       return totalFlowToSewer;
+    }
+        
+    public static List<CommertialWaterDemandRowData> calculateWaterDemandForCommertial(PdfData pdfData){
+        List<CommertialWaterDemandRowData> commertialWaterDemand = new ArrayList<>();
+        
+        
+        return commertialWaterDemand;
     }
 
-    private static int addClubHouseRow(PdfPTable table, TreeMap<ConsumptionType, Integer> miscAreaMap) {
-        addTableCell(table, "3", courier, new CellStyle(true));
-        addTableCell(table, ConsumptionType.CLUB_HOUSE.getValue(), courier);
-        int clubHouseArea = miscAreaMap.get(ConsumptionType.CLUB_HOUSE);
-        addTableCell(table, String.valueOf(clubHouseArea), courier);
+    public static TowerWaterDemandRowData calculateWaterDemandForMiscTotalForTower(PdfData pdfData) {
+        TowerWaterDemandRowData miscTowerWaterDemand = new TowerWaterDemandRowData();
+        TowerWaterDemandRowData landscapeWaterDemand = calculateWaterDemandForLandscape(pdfData);
+        TowerWaterDemandRowData swimmingPoolscapeWaterDemand = calculateWaterDemandForSwimmingPool(pdfData);
+        TowerWaterDemandRowData clubHouseWaterDemand = calculateWaterDemandForClubHouse(pdfData);
+        
+        miscTowerWaterDemand.setDescription(DESCRIPTION_ROW_TOTAL);
+        miscTowerWaterDemand.setLpda(landscapeWaterDemand.getLpda() + swimmingPoolscapeWaterDemand.getLpda() + clubHouseWaterDemand.getLpda());
+        miscTowerWaterDemand.setLpdb(landscapeWaterDemand.getLpdb() + swimmingPoolscapeWaterDemand.getLpdb() + clubHouseWaterDemand.getLpdb());
+        miscTowerWaterDemand.setGrossLPD(landscapeWaterDemand.getGrossLPD() + swimmingPoolscapeWaterDemand.getGrossLPD() + clubHouseWaterDemand.getGrossLPD());
+        miscTowerWaterDemand.setTotalFlowToSewer(landscapeWaterDemand.getTotalFlowToSewer() + swimmingPoolscapeWaterDemand.getTotalFlowToSewer() + clubHouseWaterDemand.getTotalFlowToSewer());
+        
+        return miscTowerWaterDemand;
+    }
+    
+    public static TowerWaterDemandRowData calculateWaterDemandForLandscape(PdfData pdfData) {
+        HashMap<StandardType, StandardValues> standardValMap = pdfData.getStandardValMap();
+        TowerWaterDemandRowData landscapeWaterDemandRowData = new TowerWaterDemandRowData();
+        landscapeWaterDemandRowData.setDescription(StandardType.LANDSCAPE.getValue() + " (sq.m)");
+        int landscapeArea = pdfData.getOutsideAreaMap().get(StandardType.LANDSCAPE);
+        landscapeWaterDemandRowData.setQuantity(landscapeArea);
+        
+//        int peoplePerLandscape = (int)standardValMap.get(StandardType.LANDSCAPE).getValue();
+//        
+//        int totalPopulation = landscapeArea * peoplePerLandscape;
+        landscapeWaterDemandRowData.setTotalPopulation(landscapeArea);
+        
+        landscapeWaterDemandRowData.setLpcdDom(0);
+        landscapeWaterDemandRowData.setLpda(0);
+        landscapeWaterDemandRowData.setFlowToSewerDom(0);
 
-        int clubHousePeople = clubHouseArea/peoplePerType.get(ConsumptionType.CLUB_HOUSE);
-        addTableCell(table, String.valueOf(clubHousePeople), courier);
 
-        int waterForClubHouse = 25;
-        addTableCell(table,  String.valueOf(waterForClubHouse), courier);
+        int waterReqForLandscapeArea = (int)standardValMap.get(StandardType.LANDSCAPE_AREA_WATER_PERCENTAGE).getValue();
+        landscapeWaterDemandRowData.setLpcdFlush(waterReqForLandscapeArea);
 
-        int domesticWtrReqClubHouse = clubHousePeople * waterForClubHouse;
-        addTableCell(table,  String.valueOf(domesticWtrReqClubHouse), courier);
+        int landscapeFlushWaterReq = landscapeArea * waterReqForLandscapeArea;
+        landscapeWaterDemandRowData.setLpdb(landscapeFlushWaterReq);
+        landscapeWaterDemandRowData.setFlowToSewerFlush(0);
+        
+        landscapeWaterDemandRowData.setGrossLPD(landscapeFlushWaterReq);
+        return landscapeWaterDemandRowData;
+    }
+
+    public static TowerWaterDemandRowData calculateWaterDemandForSwimmingPool(PdfData pdfData) {
+        HashMap<StandardType, StandardValues> standardValMap = pdfData.getStandardValMap();
+        TowerWaterDemandRowData swimmingPoolWaterDemandRowData = new TowerWaterDemandRowData();
+        swimmingPoolWaterDemandRowData.setDescription(StandardType.SWIMMING_POOL.getValue() + "Capacity (cum)");
+        int swimmingPoolArea = pdfData.getOutsideAreaMap().get(StandardType.SWIMMING_POOL);
+        swimmingPoolWaterDemandRowData.setQuantity(swimmingPoolArea);
+        swimmingPoolWaterDemandRowData.setTotalPopulation(0);
+        double wtrReqSwimmingPool = (double) standardValMap.get(StandardType.SWIMMING_POOL_AREA_PERCENT).getValue();
+        swimmingPoolWaterDemandRowData.setLpcdDom((float)wtrReqSwimmingPool);
+        
+        double lpda = (int)(swimmingPoolArea * (wtrReqSwimmingPool/100) * 1000);
+        swimmingPoolWaterDemandRowData.setLpda((float)lpda);
+        swimmingPoolWaterDemandRowData.setFlowToSewerDom(0);
+        swimmingPoolWaterDemandRowData.setLpcdFlush(0);
+        swimmingPoolWaterDemandRowData.setLpdb(0);
+        swimmingPoolWaterDemandRowData.setFlowToSewerFlush(0);
+        swimmingPoolWaterDemandRowData.setGrossLPD((float)lpda);
+        swimmingPoolWaterDemandRowData.setTotalFlowToSewer(0);
+
+        return swimmingPoolWaterDemandRowData;
+    }
+    
+    public static TowerWaterDemandRowData calculateWaterDemandForClubHouse(PdfData pdfData) {
+        HashMap<StandardType, StandardValues> standardValMap = pdfData.getStandardValMap();
+        TowerWaterDemandRowData clubHouseWaterDemandRowData = new TowerWaterDemandRowData();
+        clubHouseWaterDemandRowData.setDescription(StandardType.CLUB_HOUSE.getValue());
+
+        int clubHouseArea = pdfData.getOutsideAreaMap().get(StandardType.CLUB_HOUSE);
+        clubHouseWaterDemandRowData.setQuantity(clubHouseArea);
+        
+        int clubHousePeople = (int) (clubHouseArea/standardValMap.get(StandardType.CLUB_HOUSE).getValue());
+        clubHouseWaterDemandRowData.setTotalPopulation(clubHousePeople);
+
+        //TODO hardcoded value
+        int lpcdDom = 25;
+        clubHouseWaterDemandRowData.setLpcdDom(lpcdDom);
+
+        int lpda = clubHousePeople * lpcdDom;
+        clubHouseWaterDemandRowData.setLpda(lpda);
         //
-        addTableCell(table,  "90", courier);
-        int clubHouseFlushing = 20;
-        addTableCell(table,  String.valueOf(clubHouseFlushing), courier);
-        int clubHouseFlushingWater = clubHousePeople * 20;
+        int domPercentageToSewer = (int) pdfData.getCapacityDetailsResidential().getsTPCapacity().getDomesticFlow();
+        clubHouseWaterDemandRowData.setFlowToSewerDom(domPercentageToSewer);
+        
+        //TODO hardcoded value
+        int lpcdFlushing = 20;
+        clubHouseWaterDemandRowData.setLpcdFlush(lpcdFlushing);
+        
+        int lpdb = clubHousePeople * lpcdFlushing;
+        clubHouseWaterDemandRowData.setLpdb(lpdb);
+        
+        int flushPercentageToSewer = (int) pdfData.getCapacityDetailsResidential().getsTPCapacity().getFlushingFlow();
+        clubHouseWaterDemandRowData.setFlowToSewerFlush(flushPercentageToSewer);
 
-        addTableCell(table, String.valueOf(clubHouseFlushingWater), courier);
-        addTableCell(table, "100", courier);
-
-        int totalClubHouseWaterReq = domesticWtrReqClubHouse + clubHouseFlushingWater;
-
-        addTableCell(table, String.valueOf(totalClubHouseWaterReq), courier);
-
-        double percentageToSewer = domesticWtrReqClubHouse * 0.9 + clubHouseFlushingWater;
-        addTableCell(table, String.valueOf(percentageToSewer), courier);
-
-        return totalClubHouseWaterReq;
+        int grossWaterDemand = lpda + lpdb;
+        clubHouseWaterDemandRowData.setGrossLPD(grossWaterDemand);
+        
+        double totalWaterToSewer = (lpda * domPercentageToSewer/100) + (lpdb * flushPercentageToSewer/100);
+        clubHouseWaterDemandRowData.setTotalFlowToSewer((float)totalWaterToSewer);
+        
+        return clubHouseWaterDemandRowData;
     }
 
-    private static double addSwimmingPoolRow(PdfPTable table, TreeMap<ConsumptionType, Integer> miscAreaMap) {
-        addTableCell(table,"2",courier, new CellStyle(true));
-        addTableCell(table, ConsumptionType.SWIMMING_POOL.getValue() + "Capacity (cum)",courier);
-        int swimmingPoolArea = miscAreaMap.get(ConsumptionType.SWIMMING_POOL);
-        addTableCell(table, String.valueOf(swimmingPoolArea), courier);
-        addTableCell(table, "-", courier);
-        double wtrReqSwimmingPool = waterRequiredPerType.get(ConsumptionType.SWIMMING_POOL);
-        addTableCell(table,  wtrReqSwimmingPool + "%", courier);
-        //
-        addTableCell(table, String.valueOf(swimmingPoolArea * (wtrReqSwimmingPool/100) * 1000), courier);
-        addTableCell(table, "0", courier);
-        addTableCell(table, "0", courier);
-        addTableCell(table, "0", courier);
-        addTableCell(table, "0", courier);
-        addTableCell(table, String.valueOf(swimmingPoolArea * (wtrReqSwimmingPool/100) * 1000), courier);
-        addTableCell(table, "0", courier);
+    public static List<CommertialWaterDemandRowData> calculateWaterDemandForShowroom(PdfData pdfData){
+        
+        List<CommertialWaterDemandRowData> commertialWaterDemandForShowroom = new ArrayList<>();
+        HashMap<StandardType, StandardValues> standardValMap = pdfData.getStandardValMap();
+        //filter showroom data
+        List<OfficeData> showrooms = pdfData.getOfficesList().stream()
+                .filter(officeData -> officeData.getType().equals(StandardType.SHOWROOM))
+                .collect(Collectors.toList());
+        
+        int retailFloatingPopulation = 0;
+        int flowToSewerDomestic = (int) pdfData.getCapacityDetailsCommertial().getsTPCapacity().getDomesticFlow();
+        int flowToSewerFlush = (int) pdfData.getCapacityDetailsCommertial().getsTPCapacity().getFlushingFlow();
+        
+        int totalShowroomPopulation = 0;
+        float totalShowroomLpda = 0 ;
+        float totalShowroomLpdb = 0 ;
+        float totalShowroomGross = 0 ;
+        float totalShowroomFlowToSewer = 0 ;
+                
+        if (!showrooms.isEmpty()) {
+            int index = 0;
+            for (; index < showrooms.size(); index++) {
+                OfficeData showroom = showrooms.get(index);
+                
+                CommertialWaterDemandRowData showroomWaterDemandRowData = new CommertialWaterDemandRowData();
+                showroomWaterDemandRowData.setDescription(showroom.getFloorNumer());
+                showroomWaterDemandRowData.setTypeOfArea("Retails/ Showroom");
+                showroomWaterDemandRowData.setArea(showroom.getArea());
+                
+                double population = showroom.getArea()/showroom.getSqMtrPerPerson();
+                //TODO hardcoded value
+                double totalPopulation = (int) population / 10;
+                showroomWaterDemandRowData.setTotalPopulation((int)Math.ceil(totalPopulation));
+                
+                int totalWaterCommertial = (int) standardValMap.get(StandardType.WATER_DEMAND_COMMERTIAL).getValue();
+                //TODO hardcoded value
+                int lpcdDomestic = totalWaterCommertial - 20;
+                showroomWaterDemandRowData.setLpcdDom(lpcdDomestic);
+                
+                int lpda = (int) totalPopulation * lpcdDomestic;
+                showroomWaterDemandRowData.setLpda(lpda);
+                showroomWaterDemandRowData.setFlowToSewerDom(flowToSewerDomestic);
 
-        return wtrReqSwimmingPool;
-    }
+                //TODO hardcoded value
+                int lpcdFlushing = 20;
+                showroomWaterDemandRowData.setLpcdFlush(lpcdFlushing);
+                
+                int lpdb = (int) totalPopulation * lpcdFlushing;
+                showroomWaterDemandRowData.setLpdb(lpdb);
+                
+                showroomWaterDemandRowData.setFlowToSewerFlush(flowToSewerFlush);
 
-    private static int addLandScapeRow(PdfPTable table,
-            TreeMap<ConsumptionType, Integer> miscAreaMap) {
-        addTableCell(table,"1",courier, new CellStyle(true));
-        addTableCell(table, ConsumptionType.LANDSCAPE.getValue() + " (sq.m)",courier);
-        int landscapeArea = miscAreaMap.get(ConsumptionType.LANDSCAPE);
-        addTableCell(table, String.valueOf(landscapeArea),courier);
-        addTableCell(table, String.valueOf(landscapeArea),courier);
-        int peoplePerLandscape = peoplePerType.get(ConsumptionType.LANDSCAPE);
-        addTableCell(table, String.valueOf(peoplePerLandscape), courier);
-        //
-        addTableCell(table, String.valueOf(landscapeArea * peoplePerLandscape), courier);
-        addTableCell(table, String.valueOf(landscapeArea * peoplePerLandscape), courier);
+                showroomWaterDemandRowData.setGrossLPD(lpda+lpdb);
 
-        int waterReqForLandscapeArea = waterRequiredPerType.get(ConsumptionType.LANDSCAPE);
-        addTableCell(table, String.valueOf(waterReqForLandscapeArea), courier);
+                int totalFlowToSewer = (int) ((lpda * flowToSewerDomestic / 100) + (lpdb * flowToSewerFlush / 100));
+                showroomWaterDemandRowData.setTotalFlowToSewer(totalFlowToSewer);
 
-        int landscapeWaterReq = landscapeArea * waterReqForLandscapeArea;
-        addTableCell(table, String.valueOf(landscapeWaterReq), courier);
-        addTableCell(table, "0", courier);
-
-        addTableCell(table, String.valueOf(landscapeWaterReq), courier);
-        addTableCell(table, "0", courier);
-        return landscapeWaterReq;
-    }
-
-    private static void createTowerWaterDemand(Document document,
-            TreeMap<ConsumptionType, Integer> towerFlatMap, int count) {
-
-        createTableRow(document, "DAILY WATER DEMAND", 12, courierBold, Element.ALIGN_CENTER,
-                Element.ALIGN_CENTER, true, true);
-
-        float[] columnDefinitionSize = {30F, 80F, 50F, 65F, 35F, 50F, 40F, 35F, 50F, 40F, 50F, 60F};
-        PdfPTable table = new PdfPTable(columnDefinitionSize);
-        table.setWidthPercentage(100);
-        for (int i = 0; i < count; i++) {
-            addTableCell(table, "TOWER " + (i + 1), courierBold,
-                    new CellStyle(0, 12, Element.ALIGN_CENTER, Element.ALIGN_CENTER));
-            int index = 1;
-            int totalDomesticConsumption = 0;
-            int totalFlushingConsumption = 0;
-            int totalGrossConsumption = 0;
-            int totalWaterToSewer = 0;
-            int totalFlats = 0;
-            for (Entry<ConsumptionType, Integer> towerFlatMapEntry : towerFlatMap.entrySet()) {
-                ConsumptionType consumptionType = towerFlatMapEntry.getKey();
-                //s.no
-                addTableCell(table, String.valueOf(index), courier);
-                //flat type
-                addTableCell(table, consumptionType.getValue(), courier);
-                //number of flats
-                int numOfFlats = towerFlatMapEntry.getValue();
-                addTableCell(table, String.valueOf(numOfFlats), courier);
-                //Total population of type
-                Integer pplForType = peoplePerType.get(consumptionType);
-                int totalPopulation = numOfFlats * pplForType;
-                addTableCell(table, String.valueOf(totalPopulation), courier);
-                //domestic consumption per type
-                Integer domesticConsumptionForType = domesticWaterReqPerType.get(consumptionType);
-                addTableCell(table, String.valueOf(domesticConsumptionForType), courier);
-                //total domestic water consumption
-                int totalDomesticWaterConsumption = totalPopulation * domesticConsumptionForType;
-                addTableCell(table, String.valueOf(totalDomesticWaterConsumption), courier);
-                //flow to sewer for domestin in %
-                int domesticToSewerPercentage = 90;
-                addTableCell(table, String.valueOf(domesticToSewerPercentage), courier);
-                //flushing water consumption per person
-                int flushWaterConsumptionPerPerson = flushingWaterReqPerType.get(consumptionType);
-                addTableCell(table, String.valueOf(flushWaterConsumptionPerPerson), courier);
-                //Total flushing water consumption
-                int totalFlushWaterConsumption = flushWaterConsumptionPerPerson * totalPopulation;
-                addTableCell(table, String.valueOf(totalFlushWaterConsumption), courier);
-                //flushing water flow to sewer in %
-                int flushingToSewerPercentage = 100;
-                addTableCell(table, String.valueOf(flushingToSewerPercentage), courier);
-                //gross water consumption
-                int grossWaterConsumption =
-                        totalDomesticWaterConsumption + totalFlushWaterConsumption;
-                addTableCell(table, String.valueOf(grossWaterConsumption), courier);
-                //flow to sewer
-                double flowToSewer =
-                        totalDomesticWaterConsumption * 0.9 + totalFlushWaterConsumption;
-                addTableCell(table, String.valueOf(flowToSewer), courier);
-
-                totalDomesticConsumption += totalDomesticWaterConsumption;
-                totalFlushingConsumption += totalFlushWaterConsumption;
-                totalGrossConsumption += grossWaterConsumption;
-                totalWaterToSewer += flowToSewer;
-                totalFlats += numOfFlats;
-                index++;
+                commertialWaterDemandForShowroom.add(showroomWaterDemandRowData);
+                retailFloatingPopulation += population;
+                totalShowroomPopulation += totalPopulation;
+                totalShowroomLpda += lpda;
+                totalShowroomLpdb += lpdb;
+                totalShowroomGross += lpda+lpdb;
+                totalShowroomFlowToSewer += totalFlowToSewer;
             }
-            addTableCell(table, "", courier);
-            addTableCell(table, "Total", courierBold);
-            addTableCell(table, String.valueOf(totalFlats), courierBold);
-            addTableCell(table, "", courier);
-            addTableCell(table, "", courier);
-            addTableCell(table, String.valueOf(totalDomesticConsumption), courierBold);
-            addTableCell(table, "", courier);
-            addTableCell(table, "", courier);
-            addTableCell(table, String.valueOf(totalFlushingConsumption), courierBold);
-            addTableCell(table, "", courier);
-            addTableCell(table, String.valueOf(totalGrossConsumption), courierBold);
-            addTableCell(table, String.valueOf(totalWaterToSewer), courierBold);
+            
+            CommertialWaterDemandRowData floatingRetailWaterDemandRowData = new CommertialWaterDemandRowData();
+            floatingRetailWaterDemandRowData.setDescription("Retail Floating Population");
+            floatingRetailWaterDemandRowData.setTypeOfArea("Retails/ Showroom");
+            
+            //TODO hardcode value
+            int floatingPopulation = (int) (retailFloatingPopulation * 0.9);
+            floatingRetailWaterDemandRowData.setArea(0);
+            floatingRetailWaterDemandRowData.setTotalPopulation(floatingPopulation);
+            
+            int floatingLPCD = 5;
+            floatingRetailWaterDemandRowData.setLpcdDom(floatingLPCD);
+
+            int lpdaFloating = (int) floatingPopulation * 5;
+            floatingRetailWaterDemandRowData.setLpda(lpdaFloating);
+            
+            int lpcdFloating = 10;
+            floatingRetailWaterDemandRowData.setLpcdFlush(lpcdFloating);
+                    
+            int lpdbFloating = floatingPopulation * lpcdFloating;
+            floatingRetailWaterDemandRowData.setLpdb(lpdbFloating);
+
+            floatingRetailWaterDemandRowData.setGrossLPD(lpdaFloating + lpdbFloating);
+            
+            int totalFlowToSewerFloating = (int) ((lpdaFloating * flowToSewerDomestic / 100) + (lpdbFloating * flowToSewerFlush / 100));
+            floatingRetailWaterDemandRowData.setTotalFlowToSewer(totalFlowToSewerFloating);
+            
+            commertialWaterDemandForShowroom.add(floatingRetailWaterDemandRowData);
+            
+            totalShowroomPopulation += floatingPopulation;
+            totalShowroomLpda += lpdaFloating;
+            totalShowroomLpdb += lpdbFloating;
+            totalShowroomGross += lpdaFloating + lpdbFloating;
+            totalShowroomFlowToSewer += totalFlowToSewerFloating;
+            //add total demand row
+            CommertialWaterDemandRowData totalShowroomWaterDemandRowData = new CommertialWaterDemandRowData();
+            totalShowroomWaterDemandRowData.setDescription(DESCRIPTION_ROW_TOTAL);
+            totalShowroomWaterDemandRowData.setTotalPopulation(totalShowroomPopulation);
+            totalShowroomWaterDemandRowData.setLpda(totalShowroomLpda);
+            totalShowroomWaterDemandRowData.setLpdb(totalShowroomLpdb);
+            totalShowroomWaterDemandRowData.setGrossLPD(totalShowroomGross);
+            totalShowroomWaterDemandRowData.setTotalFlowToSewer(totalShowroomFlowToSewer);
+            commertialWaterDemandForShowroom.add(totalShowroomWaterDemandRowData);
         }
 
-        document.add(table);
+        return commertialWaterDemandForShowroom;
+    }
+    
+    public static List<CommertialWaterDemandRowData> calculateWaterDemandForOffice(PdfData pdfData){
+        List<CommertialWaterDemandRowData> commertialWaterDemand = new ArrayList<>();
+        
+        HashMap<StandardType, StandardValues> standardValMap = pdfData.getStandardValMap();
+        //filter office data
+        List<OfficeData> offices = pdfData.getOfficesList().stream()
+                .filter(officeData -> officeData.getType().equals(StandardType.OFFICE))
+                .collect(Collectors.toList());
+        
+        int totalRetailPopulation = 0;
+        float flowToSewerDomestic = pdfData.getCapacityDetailsCommertial().getsTPCapacity().getDomesticFlow();
+        float flowToSewerFlush = pdfData.getCapacityDetailsCommertial().getsTPCapacity().getFlushingFlow();
+        
+        int totalOfficePopulation = 0;
+        int totalOfficeLpda = 0;
+        int totalOfficeLpdb = 0;
+        int totalOfficeGross = 0;
+        int totalOfficeFlowToSewer = 0;
+
+        if (!offices.isEmpty()) {
+            int index = 0;
+            for (; index < offices.size(); index++) {
+                
+                CommertialWaterDemandRowData commertialWaterDemandRowData = new CommertialWaterDemandRowData();
+                
+                OfficeData officeData = offices.get(index);
+                
+                commertialWaterDemandRowData.setDescription(officeData.getFloorNumer());
+                commertialWaterDemandRowData.setTypeOfArea("Offices");
+                commertialWaterDemandRowData.setArea(officeData.getArea());
+                
+                double population = officeData.getArea()/officeData.getSqMtrPerPerson();
+                int totalPopulation = (int)Math.ceil(population);
+                commertialWaterDemandRowData.setTotalPopulation(totalPopulation);
+                
+                int totalWaterCommertial = (int) standardValMap.get(StandardType.WATER_DEMAND_COMMERTIAL).getValue();
+                
+                //TODO hard coded value
+                int lpcdDomestic = totalWaterCommertial - 20;
+                commertialWaterDemandRowData.setLpcdDom((int)Math.ceil(lpcdDomestic));
+                
+                int lpda = (int) totalPopulation * lpcdDomestic;
+                commertialWaterDemandRowData.setLpda(lpda);
+                
+                commertialWaterDemandRowData.setFlowToSewerDom(flowToSewerDomestic);
+                
+                //TODO hard coded value
+                int lpcdFlushing = 20;
+                commertialWaterDemandRowData.setLpcdFlush(lpcdFlushing);
+                
+                int lpdb = (int) totalPopulation * lpcdFlushing;
+                commertialWaterDemandRowData.setLpdb(lpdb);
+                
+                commertialWaterDemandRowData.setFlowToSewerFlush(flowToSewerFlush);
+                commertialWaterDemandRowData.setGrossLPD(lpda+lpdb);
+                        
+                int totalFlowToSewer = (int) ((lpda * flowToSewerDomestic / 100) + (lpdb * flowToSewerFlush / 100));
+                commertialWaterDemandRowData.setTotalFlowToSewer(totalFlowToSewer);
+                
+                commertialWaterDemand.add(commertialWaterDemandRowData);
+                
+                totalRetailPopulation += totalPopulation;
+                
+                totalOfficePopulation += totalPopulation;
+                totalOfficeLpda += lpda;
+                totalOfficeLpdb += lpdb;
+                totalOfficeGross += (lpda + lpdb);
+                totalOfficeFlowToSewer += totalFlowToSewer;
+            }
+
+            CommertialWaterDemandRowData visitorWaterDemandRowData = new CommertialWaterDemandRowData();
+            visitorWaterDemandRowData.setDescription("Visitors");
+            visitorWaterDemandRowData.setTypeOfArea("Offices");
+            //TODO hardcoded value
+            int visitorArea = 10;
+            visitorWaterDemandRowData.setArea(10);
+
+            //TODO : visitorPopulation 
+            int visitorPopulation = (totalRetailPopulation/visitorArea);
+            visitorWaterDemandRowData.setTotalPopulation(visitorPopulation);
+            
+            //TODO : hardcoded value
+            int domLPCDvisitor = 5;
+            visitorWaterDemandRowData.setLpcdDom(domLPCDvisitor);
+            
+            int lpdaVisitor = (int) visitorPopulation * domLPCDvisitor;
+            visitorWaterDemandRowData.setLpda(lpdaVisitor);
+            
+            visitorWaterDemandRowData.setFlowToSewerDom(flowToSewerDomestic);
+            //TODO : hardcoded value
+            int flushingLPCD = 10;
+            visitorWaterDemandRowData.setLpcdFlush(flushingLPCD);
+            
+            int lpdbVisitor = visitorPopulation * flushingLPCD;
+            visitorWaterDemandRowData.setLpdb(lpdbVisitor);
+            
+            int grossLPDVisitor = lpdaVisitor + lpdbVisitor;
+            visitorWaterDemandRowData.setGrossLPD(grossLPDVisitor);
+            
+            int totalFlowToSewerVisitor = (int) ((lpdaVisitor * flowToSewerDomestic / 100) + (lpdbVisitor * flowToSewerFlush / 100));
+            visitorWaterDemandRowData.setTotalFlowToSewer(totalFlowToSewerVisitor);
+            
+            commertialWaterDemand.add(visitorWaterDemandRowData);
+            
+            
+            totalOfficePopulation += visitorPopulation;
+            totalOfficeLpda += lpdaVisitor;
+            totalOfficeLpdb += lpdbVisitor;
+            totalOfficeGross += (lpdaVisitor + lpdbVisitor);
+            totalOfficeFlowToSewer += totalFlowToSewerVisitor;
+            
+            CommertialWaterDemandRowData totalOfficeWaterDemandRowData = new CommertialWaterDemandRowData();
+            totalOfficeWaterDemandRowData.setDescription(DESCRIPTION_ROW_TOTAL);
+            totalOfficeWaterDemandRowData.setLpda(totalOfficeLpda);
+            totalOfficeWaterDemandRowData.setLpdb(totalOfficeLpdb);
+            totalOfficeWaterDemandRowData.setGrossLPD(totalOfficeGross);
+            totalOfficeWaterDemandRowData.setTotalFlowToSewer(totalOfficeFlowToSewer);
+            
+            commertialWaterDemand.add(totalOfficeWaterDemandRowData);
+        }
+        return commertialWaterDemand;
     }
 
-    private static void createWaterDemandDescription(Document document) {
-        float[] columnDefinitionSize = {30F, 80F, 50F, 65F, 35F, 50F, 40F, 35F, 50F, 40F, 50F, 60F};
-        PdfPTable table = new PdfPTable(columnDefinitionSize);
-        table.setWidthPercentage(100);
-        addTableCell(table, "s. no. ", courierBold,
-                new CellStyle(2, 0, Element.ALIGN_CENTER, Element.ALIGN_CENTER));
-        addTableCell(table, "description ", courierBold,
-                new CellStyle(2, 0, Element.ALIGN_CENTER, Element.ALIGN_CENTER));
-        addTableCell(table, "Number of flats ", courierBold,
-                new CellStyle(2, 0, Element.ALIGN_CENTER, Element.ALIGN_CENTER));
-        addTableCell(table, "Total population ", courierBold,
-                new CellStyle(2, 0, Element.ALIGN_CENTER, Element.ALIGN_CENTER));
+    public static List<CommertialWaterDemandRowData> calculateWaterDemandForOfficeMisc(PdfData pdfData) {
+        List<CommertialWaterDemandRowData> officeMiscData = new ArrayList<>();
+        
+        float flowToSewerDomestic = pdfData.getCapacityDetailsCommertial().getsTPCapacity().getDomesticFlow();
+        float flowToSewerFlush = pdfData.getCapacityDetailsCommertial().getsTPCapacity().getDomesticFlow();
+        
+        CommertialWaterDemandRowData commertialMiscDataRow = new CommertialWaterDemandRowData();
+        commertialMiscDataRow.setDescription("Maintenance &\nSecurity Staff");
+        commertialMiscDataRow.setTypeOfArea("");
+        commertialMiscDataRow.setArea(0);
+        //TODO hardcoded value
+        int miscPopulation = 50;
+        commertialMiscDataRow.setTotalPopulation(miscPopulation);
+        //TODO hardcoded value
+        int lpcdDomestic = 25;
+        commertialMiscDataRow.setLpcdDom(lpcdDomestic);
+        
+        int lpdaMisc = miscPopulation * lpcdDomestic;
+        commertialMiscDataRow.setLpda(lpdaMisc);
+        commertialMiscDataRow.setFlowToSewerDom(flowToSewerDomestic);
+        
+        int lpcdFlushing = 20;
+        commertialMiscDataRow.setLpcdFlush(lpcdFlushing);
+        
+        int lpdbMisc = miscPopulation * lpcdFlushing;
+        commertialMiscDataRow.setLpdb(lpdbMisc);
+        
+        commertialMiscDataRow.setFlowToSewerFlush(flowToSewerFlush);
+        int lpdGross = lpdaMisc + lpdbMisc;
+        commertialMiscDataRow.setGrossLPD(lpdGross);
+        
+        int totalFlowToSewer = (int) ((lpdaMisc * flowToSewerDomestic / 100) + (lpdbMisc * flowToSewerFlush / 100));
+        commertialMiscDataRow.setTotalFlowToSewer(totalFlowToSewer);
+        
+        officeMiscData.add(commertialMiscDataRow);
+        
+        //Total data row same as misc
+        CommertialWaterDemandRowData commertialMiscTotalDataRow = new CommertialWaterDemandRowData();
+        commertialMiscTotalDataRow.setDescription(DESCRIPTION_ROW_TOTAL);
+        commertialMiscTotalDataRow.setTypeOfArea("");
+        commertialMiscTotalDataRow.setArea(0);
+        commertialMiscTotalDataRow.setTotalPopulation(miscPopulation);
+        commertialMiscTotalDataRow.setLpda(lpdaMisc);
+        commertialMiscTotalDataRow.setLpdb(lpdbMisc);
+        commertialMiscTotalDataRow.setGrossLPD(lpdGross);
+        commertialMiscTotalDataRow.setTotalFlowToSewer(totalFlowToSewer);
+        officeMiscData.add(commertialMiscTotalDataRow);
+        
+        return officeMiscData;
+    }
+    
+    private static TowerWaterDemandRowData getTotalWaterDemandForTower(List<TowerWaterDemandRowData> perTowerWaterDemandList) {
+        TowerWaterDemandRowData totalWaterDemandForTower = new TowerWaterDemandRowData();
+        totalWaterDemandForTower.setDescription(DESCRIPTION_ROW_TOTAL);
+        int totalQty = 0;
+        float totalLpda = 0;        
+        float totalLpdb = 0;        
+        float grossLpd = 0;        
+        float totalFlowToSewer = 0;        
+        for(TowerWaterDemandRowData dataRow : perTowerWaterDemandList) {
+            totalQty += dataRow.getQuantity();
+            totalLpda += dataRow.getLpda();
+            totalLpdb += dataRow.getLpdb();
+            grossLpd += dataRow.getGrossLPD();
+            totalFlowToSewer += dataRow.getTotalFlowToSewer();
+        }
+        totalWaterDemandForTower.setQuantity(totalQty);
+        totalWaterDemandForTower.setLpda(totalLpda);
+        totalWaterDemandForTower.setLpdb(totalLpdb);
+        totalWaterDemandForTower.setGrossLPD(grossLpd);
+        totalWaterDemandForTower.setTotalFlowToSewer(totalFlowToSewer);
+        
+        return totalWaterDemandForTower;
+    }
 
-        addTableCell(table, "Dom Water Requirement ", courierBold,
-                new CellStyle(0, 3, Element.ALIGN_CENTER, Element.ALIGN_CENTER));
-        addTableCell(table, "Flushing Water Requirement ", courierBold,
-                new CellStyle(0, 3, Element.ALIGN_CENTER, Element.ALIGN_CENTER));
-        addTableCell(table, "Gross Water Req. ", courierBold);
-        addTableCell(table, "Total Flow to Sewer", courierBold);
+    private static List<TowerWaterDemandRowData> getWaterDemandForTower(TowerData towerData, HashMap<StandardType, StandardValues> standardValMap, float domesticToSewerPercentage, float flushingToSewerPercentage) {
+        List<TowerWaterDemandRowData> perTowerWaterDemandList = new ArrayList<>();
+        TreeMap<StandardType, Integer> flatsData = towerData.getFlatsData();
+        for (StandardType type : flatsData.keySet()) {
+            Integer numOfFlats = flatsData.get(type);
+            if (numOfFlats > 0) {
+                TowerWaterDemandRowData towerWaterDemandRowData = new TowerWaterDemandRowData();
+                towerWaterDemandRowData.setDescription(type.getValue());
+                //Total population of type
+                StandardValues standardVal = standardValMap.get(type);
+                towerWaterDemandRowData.setQuantity(numOfFlats);
 
-        addTableCell(table, "LPCD", courierBold);
-        addTableCell(table, "LDP (A) ", courierBold);
-        addTableCell(table, "Flow to Sewer  (%) ", courierBold);
-        addTableCell(table, "LPCD ", courierBold);
-        addTableCell(table, "LPD (B)", courierBold);
-        addTableCell(table, "Flow to Sewer  (%) ", courierBold);
-        addTableCell(table, "LPD", courierBold);
-        addTableCell(table, "LPD", courierBold);
+                String standardValue = DataFormater.getStandardValue(standardVal);
+                int pplForType = Integer.parseInt(standardValue);
+                int totalPopulation = numOfFlats * pplForType;
+                towerWaterDemandRowData.setTotalPopulation(totalPopulation);
 
-        document.add(table);
-    }*/
+                //domestic consumption per type
+                int domesticConsumption = (int) standardValMap.get(StandardType.WATER_DEMAND).getValue() * 2 / 3;
+                towerWaterDemandRowData.setLpcdDom(domesticConsumption);
+
+                //total domestic water consumption
+                int totalDomesticWaterConsumption = totalPopulation * domesticConsumption;
+                towerWaterDemandRowData.setLpda(totalDomesticWaterConsumption);
+
+                //flow to sewer for domestin in %
+                towerWaterDemandRowData.setFlowToSewerDom(domesticToSewerPercentage);
+
+                //flushing water consumption per person
+                int flushWaterConsumptionPerPerson = (int) standardValMap.get(StandardType.WATER_DEMAND).getValue() * 1 / 3;
+                towerWaterDemandRowData.setLpcdFlush(flushWaterConsumptionPerPerson);
+
+                //Total flushing water consumption
+                int totalFlushWaterConsumption = flushWaterConsumptionPerPerson * totalPopulation;
+                towerWaterDemandRowData.setLpdb(totalFlushWaterConsumption);
+
+                //flushing water flow to sewer in %
+                towerWaterDemandRowData.setFlowToSewerFlush(flushingToSewerPercentage);
+
+                //gross water consumption
+                float grossWaterConsumption = totalDomesticWaterConsumption + totalFlushWaterConsumption;
+                towerWaterDemandRowData.setGrossLPD(grossWaterConsumption);
+
+                //flow to sewer
+                float flowToSewer = totalDomesticWaterConsumption * (domesticToSewerPercentage / 100) + totalFlushWaterConsumption * (flushingToSewerPercentage / 100);
+                towerWaterDemandRowData.setTotalFlowToSewer(flowToSewer);
+
+                perTowerWaterDemandList.add(towerWaterDemandRowData);
+            }
+        }
+        return perTowerWaterDemandList;
+    }
+    
+    public static CommertialWaterDemandRowData getTotalCommertialData(PdfData pdfData){
+        float totalLdpa=0;
+        List<CommertialWaterDemandRowData> showroomDetails = calculateWaterDemandForShowroom(pdfData);
+        List<CommertialWaterDemandRowData> officeDetails = calculateWaterDemandForOffice(pdfData);
+        List<CommertialWaterDemandRowData> miscDetails = calculateWaterDemandForOfficeMisc(pdfData);
+        
+        CommertialWaterDemandRowData showroomTotalRowData = showroomDetails.stream()
+                .filter(dataRow -> dataRow.getDescription().equals(DESCRIPTION_ROW_TOTAL))
+                .findFirst()
+                .get();
+        
+        CommertialWaterDemandRowData officeTotalRowData = officeDetails.stream()
+                .filter(dataRow -> dataRow.getDescription().equals(DESCRIPTION_ROW_TOTAL))
+                .findFirst()
+                .get();
+        
+        CommertialWaterDemandRowData miscTotalRowData = miscDetails.stream()
+                .filter(dataRow -> dataRow.getDescription().equals(DESCRIPTION_ROW_TOTAL))
+                .findFirst()
+                .get();
+        
+        CommertialWaterDemandRowData totalRowData = new CommertialWaterDemandRowData();
+        totalRowData.setLpda(showroomTotalRowData.getLpda() + officeTotalRowData.getLpda() + miscTotalRowData.getLpda());
+        totalRowData.setLpdb(showroomTotalRowData.getLpdb() + officeTotalRowData.getLpdb() + miscTotalRowData.getLpdb());
+        totalRowData.setTotalFlowToSewer(showroomTotalRowData.getTotalFlowToSewer() + officeTotalRowData.getTotalFlowToSewer() + miscTotalRowData.getTotalFlowToSewer());
+        
+        return totalRowData;
+    }
 }

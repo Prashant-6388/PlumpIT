@@ -11,7 +11,8 @@ package com.pc.plumbit.enums;
 public enum ConsumptionType {
 
     TOWER("TOWER"),
-    OUTSIDE_AREA("OUTSIDE AREA");
+    OUTSIDE_AREA("OUTSIDE AREA"),
+    OFFICE("OFFICE");
     
     private final String value;
 
