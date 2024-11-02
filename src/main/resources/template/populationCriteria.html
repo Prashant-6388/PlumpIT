@@ -1,0 +1,157 @@
+<html>
+    <head>
+        <style>
+            .table-container {
+                display: flex;
+                justify-content: space-between;
+                margin: 5px;
+            }
+
+            .header-row {
+                font-size: 16px !important;
+                background-color: #367aa0;
+                color: white;
+                text-align: center;
+            }
+
+            .bold-data {
+                font-weight: bold !important;
+            }
+
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            /* Styling for inner tables */
+
+            .innerTable {
+                font-family: "Times New Roman", Times, serif;
+                width: 95%;
+                border-collapse: separate;
+                border-spacing: 0;
+                border: 1px solid #ddd;
+                border-radius: 15px;
+                overflow: hidden;
+            }
+
+            .innerTable td {
+                font-size: 14px;
+            }
+
+            /* Common styling for cells in inner tables */
+
+            .innerTable th,
+            td {
+                padding: 7px;
+                text-align: left;
+            }
+
+            /* Specific styling for each table */
+
+            .innerTable th {
+                background-color: #4CAF50;
+                color: white;
+            }
+
+            /* Styling for bold rows */
+
+            .innerTable .bold-row {
+                font-weight: bold;
+                background-color: #f2f2f2;
+            }
+
+            /* Rounded corners for the first and last rows of the inner tables */
+
+            .innerTable tr:first-child td:first-child {
+                border-top-left-radius: 15px;
+            }
+
+            .innerTable tr:first-child td:last-child {
+                border-top-right-radius: 15px;
+            }
+
+            .innerTable tr:last-child td:first-child {
+                border-bottom-left-radius: 15px;
+            }
+
+            .innerTable tr:last-child td:last-child {
+                border-bottom-right-radius: 15px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div>
+            <table class='innerTable'>
+                <tr>
+                    <td class='header-row' colspan='7'>Residential Population Criteria(Person/Flat)</td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>1 BHK</td>
+                    <td>${ONE_BHK}</td>
+                    <td>Person Average</td>
+                    <td></td>
+                    <td class='bold-data'>2 BHK</td>
+                    <td>${TWO_BHK}</td>
+                    <td>Person Average</td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>2.5 BHK</td>
+                    <td>${TWO_N_HALF_BHK}</td>
+                    <td>Person Average</td>
+                    <td></td>
+                    <td class='bold-data'>3 BHK</td>
+                    <td>${THREE_BHK}</td>
+                    <td>Person Average</td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>3.5 BHK</td>
+                    <td>${THREE_N_HALF_BHK}</td>
+                    <td>Person Average</td>
+                    <td></td>
+                    <td class='bold-data'>4 BHK</td>
+                    <td>${FOUR_BHK}</td>
+                    <td>Person Average</td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>4.5 BHK</td>
+                    <td>${FOUR_AND_HALF_BHK}</td>
+                    <td>Person Average</td>
+                    <td></td>
+                    <td class='bold-data'>STUDIO</td>
+                    <td>${STUDIO}</td>
+                    <td>Person Average</td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>PODS</td>
+                    <td>${PODS}</td>
+                    <td>Person Average</td>
+                    <td></td>
+                    <td class='bold-data'>SERVANT</td>
+                    <td>${SERVANT}</td>
+                    <td>Per 4 BHK flat</td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>DRIVER</td>
+                    <td>${DRIVER}</td>
+                    <td>Per 4 BHK flat</td>
+                    <td></td>
+                    <td class='bold-data'>Landscape</td>
+                    <td>${LANDSCAPE}</td>
+                    <td></td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>Swimming Pool</td>
+                    <td>${SWIMMING_POOL}</td>
+                    <td></td>
+                    <td></td>
+                    <td class='bold-data'>Club House</td>
+                    <td>${CLUB_HOUSE}</td>
+                    <td>sq. mtr per person</td>
+                </tr>
+            </table>
+        </div>
+    </body>
+</html>

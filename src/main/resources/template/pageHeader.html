@@ -1,0 +1,63 @@
+<html>
+    <head>
+        <style>
+            .header-row {
+                font-size: 20px !important;
+                color: #367aa0;
+                text-align: center;
+            }
+
+            .bold-data {
+                font-weight: bold !important;
+            }
+
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            /* Styling for inner tables */
+
+            .innerTable {
+                font-family: "Times New Roman", Times, serif;
+                width: 95%;
+                border-collapse: separate;
+                border-spacing: 0;
+                border-radius: 15px;
+                overflow: hidden;
+            }
+
+            /* Common styling for cells in inner tables */
+
+            .innerTable th,
+            td {
+                padding: 7px;
+                text-align: left;
+            }
+
+            /* Specific styling for each table */
+
+            .innerTable th {
+                background-color: #4CAF50;
+                color: white;
+            }
+
+            /* Styling for bold rows */
+
+            .innerTable .bold-row {
+                font-weight: bold;
+            }
+
+        </style>
+    </head>
+
+    <body>
+        <div>
+            <table class='innerTable'>
+                <tr><td class='header-row bold-row'>${PAGE_TITLE}</td></tr>
+            </table>
+
+        </div>
+    </body>
+</html>

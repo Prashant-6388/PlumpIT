@@ -82,7 +82,7 @@ public class PdfData {
         this.capacityDetailsResidential = capacityDetailsResidential;
     }
 
-    public CapacityDetails getCapacityDetailsCommertial() {
+    public CapacityDetails getCapacityDetailsCommercial() {
         return capacityDetailsCommertial;
     }
 

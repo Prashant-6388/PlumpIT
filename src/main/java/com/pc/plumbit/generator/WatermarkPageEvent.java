@@ -15,8 +15,6 @@ import com.lowagie.text.pdf.PdfPageEventHelper;
 import com.lowagie.text.pdf.PdfWriter;
 import java.awt.Color;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -30,7 +28,7 @@ class WatermarkPageEvent extends PdfPageEventHelper {
         try {
             baseFont = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
             gState = new PdfGState();
-            gState.setFillOpacity(0.5f); // Adjust opacity as needed
+            gState.setFillOpacity(0.2f); // Adjust opacity as needed
         } catch (DocumentException | IOException ex) {
             ex.printStackTrace();
         }
@@ -44,7 +42,7 @@ class WatermarkPageEvent extends PdfPageEventHelper {
         content.beginText();
         content.setFontAndSize(baseFont, 48);
         content.setColorFill(Color.LIGHT_GRAY);
-        content.showTextAligned(Element.ALIGN_CENTER, "Watermark Text", 297.5f, 421, 45);
+        content.showTextAligned(Element.ALIGN_CENTER, "Spectacular Eng Pvt. Ltd.", 297.5f, 421, 45);
         content.endText();
         content.restoreState();
         
@@ -61,7 +59,7 @@ class WatermarkPageEvent extends PdfPageEventHelper {
         content.beginText();
         content.setFontAndSize(baseFont, 8);
         content.setColorFill(Color.LIGHT_GRAY);
-        content.showTextAligned(Element.ALIGN_CENTER, "Company name", document.getPageSize().getWidth()/2, document.bottom() - 20, 0);
+        content.showTextAligned(Element.ALIGN_CENTER, "Spectacular Eng Pvt. Ltd.", document.getPageSize().getWidth()/2, document.bottom() - 20, 0);
         content.showTextAligned(Element.ALIGN_RIGHT, "Page " + writer.getPageNumber(), document.right() - 20, document.bottom() - 20, 0);
         content.endText();
     }

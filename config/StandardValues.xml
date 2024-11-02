@@ -200,7 +200,7 @@
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>WATER_DEMAND_COMMERTIAL</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>WATER_DEMAND_COMMERCIAL</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
       <value>45.0</value>
       <round>true</round>
@@ -208,7 +208,7 @@
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>SOLID_WASTE_KG_PERSON_DAY_COMMERTIAL</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>SOLID_WASTE_KG_PERSON_DAY_COMMERCIAL</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
       <value>0.2</value>
       <round>false</round>
@@ -216,7 +216,7 @@
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>GAS_BANK_COMMERTIAL</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>GAS_BANK_COMMERCIAL</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
       <value>0.5</value>
       <round>false</round>
@@ -224,7 +224,7 @@
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>SOLAR_COMMERTIAL</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>SOLAR_COMMERCIAL</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
       <value>0</value>
       <round>true</round>
@@ -232,7 +232,7 @@
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>SOLID_WASTE_DRY_GARBAGE_COMMERTIAL</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>SOLID_WASTE_DRY_GARBAGE_COMMERCIAL</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
       <value>60</value>
       <round>false</round>
@@ -240,7 +240,7 @@
     </com.pc.plumbit.model.StandardValues>
   </entry>
   <entry>
-    <com.pc.plumbit.enums.StandardType>SOLID_WASTE_WET_GARBAGE_COMMERTIAL</com.pc.plumbit.enums.StandardType>
+    <com.pc.plumbit.enums.StandardType>SOLID_WASTE_WET_GARBAGE_COMMERCIAL</com.pc.plumbit.enums.StandardType>
     <com.pc.plumbit.model.StandardValues>
       <value>40</value>
       <round>false</round>

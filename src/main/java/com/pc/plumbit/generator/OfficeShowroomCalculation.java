@@ -579,9 +579,9 @@ public class OfficeShowroomCalculation {
         table.setHorizontalAlignment(0);
         table.setWidthPercentage(100);
         
-        float domTank = pdfData.getCapacityDetailsCommertial().getuGTCapacity().getDomesticTank();
-        float rawTank = pdfData.getCapacityDetailsCommertial().getuGTCapacity().getRawWaterTank();
-        float flushingTank = pdfData.getCapacityDetailsCommertial().getuGTCapacity().getFlushingTank();
+        float domTank = pdfData.getCapacityDetailsCommercial().getuGTCapacity().getDomesticTank();
+        float rawTank = pdfData.getCapacityDetailsCommercial().getuGTCapacity().getRawWaterTank();
+        float flushingTank = pdfData.getCapacityDetailsCommercial().getuGTCapacity().getFlushingTank();
         
         addTableHeader(table, "UGR CAPACITY", 13, courierBold);
         
@@ -651,8 +651,8 @@ public class OfficeShowroomCalculation {
         int roundedLPDA = MathUtils.roundUpToNearestTenThousand(totalLdpa);
         int roundedLPDB = MathUtils.roundUpToNearestTenThousand(totalLdpb);
         
-        int ohtDomestic = (int)pdfData.getCapacityDetailsCommertial().getoHTCapacity().getDomesticTank();
-        int ohtFlushing = (int)pdfData.getCapacityDetailsCommertial().getoHTCapacity().getFlushingTank();
+        int ohtDomestic = (int)pdfData.getCapacityDetailsCommercial().getoHTCapacity().getDomesticTank();
+        int ohtFlushing = (int)pdfData.getCapacityDetailsCommercial().getoHTCapacity().getFlushingTank();
         
         addTableHeader(table, "OVERHEAD TANK", 13, courierBold);
         

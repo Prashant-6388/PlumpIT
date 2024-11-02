@@ -244,8 +244,8 @@ public class WaterDemandCalculator {
                 .collect(Collectors.toList());
         
         int retailFloatingPopulation = 0;
-        int flowToSewerDomestic = (int) pdfData.getCapacityDetailsCommertial().getsTPCapacity().getDomesticFlow();
-        int flowToSewerFlush = (int) pdfData.getCapacityDetailsCommertial().getsTPCapacity().getFlushingFlow();
+        int flowToSewerDomestic = (int) pdfData.getCapacityDetailsCommercial().getsTPCapacity().getDomesticFlow();
+        int flowToSewerFlush = (int) pdfData.getCapacityDetailsCommercial().getsTPCapacity().getFlushingFlow();
         
         int totalShowroomPopulation = 0;
         float totalShowroomLpda = 0 ;
@@ -268,7 +268,7 @@ public class WaterDemandCalculator {
                 double totalPopulation = (int) population / 10;
                 showroomWaterDemandRowData.setTotalPopulation((int)Math.ceil(totalPopulation));
                 
-                int totalWaterCommertial = (int) standardValMap.get(StandardType.WATER_DEMAND_COMMERTIAL).getValue();
+                int totalWaterCommertial = (int) standardValMap.get(StandardType.WATER_DEMAND_COMMERCIAL).getValue();
                 //TODO hardcoded value
                 int lpcdDomestic = totalWaterCommertial - 20;
                 showroomWaterDemandRowData.setLpcdDom(lpcdDomestic);
@@ -357,8 +357,8 @@ public class WaterDemandCalculator {
                 .collect(Collectors.toList());
         
         int totalRetailPopulation = 0;
-        float flowToSewerDomestic = pdfData.getCapacityDetailsCommertial().getsTPCapacity().getDomesticFlow();
-        float flowToSewerFlush = pdfData.getCapacityDetailsCommertial().getsTPCapacity().getFlushingFlow();
+        float flowToSewerDomestic = pdfData.getCapacityDetailsCommercial().getsTPCapacity().getDomesticFlow();
+        float flowToSewerFlush = pdfData.getCapacityDetailsCommercial().getsTPCapacity().getFlushingFlow();
         
         int totalOfficePopulation = 0;
         int totalOfficeLpda = 0;
@@ -382,7 +382,7 @@ public class WaterDemandCalculator {
                 int totalPopulation = (int)Math.ceil(population);
                 commertialWaterDemandRowData.setTotalPopulation(totalPopulation);
                 
-                int totalWaterCommertial = (int) standardValMap.get(StandardType.WATER_DEMAND_COMMERTIAL).getValue();
+                int totalWaterCommertial = (int) standardValMap.get(StandardType.WATER_DEMAND_COMMERCIAL).getValue();
                 
                 //TODO hard coded value
                 int lpcdDomestic = totalWaterCommertial - 20;
@@ -473,8 +473,8 @@ public class WaterDemandCalculator {
     public static List<CommertialWaterDemandRowData> calculateWaterDemandForOfficeMisc(PdfData pdfData) {
         List<CommertialWaterDemandRowData> officeMiscData = new ArrayList<>();
         
-        float flowToSewerDomestic = pdfData.getCapacityDetailsCommertial().getsTPCapacity().getDomesticFlow();
-        float flowToSewerFlush = pdfData.getCapacityDetailsCommertial().getsTPCapacity().getDomesticFlow();
+        float flowToSewerDomestic = pdfData.getCapacityDetailsCommercial().getsTPCapacity().getDomesticFlow();
+        float flowToSewerFlush = pdfData.getCapacityDetailsCommercial().getsTPCapacity().getDomesticFlow();
         
         CommertialWaterDemandRowData commertialMiscDataRow = new CommertialWaterDemandRowData();
         commertialMiscDataRow.setDescription("Maintenance &\nSecurity Staff");

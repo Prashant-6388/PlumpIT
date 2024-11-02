@@ -18,8 +18,8 @@ import com.lowagie.text.pdf.PdfPTable;
  */
 public class PDFUtils {
     
-    public static final Font courierBold = FontFactory.getFont(FontFactory.COURIER_BOLD, 8);
-    public static final Font courier = FontFactory.getFont(FontFactory.COURIER, 8);
+    public static final Font courierBold = FontFactory.getFont(FontFactory.TIMES_BOLD, 8);
+    public static final Font courier = FontFactory.getFont(FontFactory.TIMES_ROMAN, 8);
     
     private PDFUtils(){
     }
@@ -37,6 +37,15 @@ public class PDFUtils {
         cell.setColspan(length);
         cell.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell.setVerticalAlignment(Element.ALIGN_CENTER);
+        cell.setBorder(0);
+        table.addCell(cell);
+    }
+    
+    public static void addTableHeader(PdfPTable table, String content, int length, Font font, boolean addBorder, int alignment) {
+        PdfPCell cell = new PdfPCell(new Phrase(content, font));
+        cell.setColspan(length);
+        cell.setHorizontalAlignment(alignment);
+        cell.setVerticalAlignment(alignment);
         cell.setBorder(0);
         table.addCell(cell);
     }

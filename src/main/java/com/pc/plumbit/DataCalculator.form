@@ -1051,8 +1051,8 @@
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Group type="102" alignment="0" attributes="0">
                                               <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Component id="stdwaterDemandCommertial" min="-2" pref="50" max="-2" attributes="0"/>
-                                                  <Component id="dryGarbageInputCommertial" alignment="0" min="-2" pref="50" max="-2" attributes="0"/>
+                                                  <Component id="stdwaterDemandCommercial" min="-2" pref="50" max="-2" attributes="0"/>
+                                                  <Component id="dryGarbageInputCommercial" alignment="0" min="-2" pref="50" max="-2" attributes="0"/>
                                               </Group>
                                               <EmptySpace min="-2" pref="6" max="-2" attributes="0"/>
                                               <Group type="103" groupAlignment="0" attributes="0">
@@ -1061,25 +1061,25 @@
                                                   <Component id="jLabel152" min="-2" pref="72" max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
-                                          <Component id="stdGasBankCommertial" min="-2" pref="50" max="-2" attributes="0"/>
+                                          <Component id="stdGasBankCommercial" min="-2" pref="50" max="-2" attributes="0"/>
                                       </Group>
                                       <EmptySpace pref="120" max="32767" attributes="0"/>
                                       <Group type="103" groupAlignment="0" attributes="0">
                                           <Group type="102" alignment="0" attributes="0">
                                               <Component id="jLabel95" min="-2" max="-2" attributes="0"/>
                                               <EmptySpace min="-2" pref="127" max="-2" attributes="0"/>
-                                              <Component id="stdSolarCommertial" min="-2" pref="50" max="-2" attributes="0"/>
+                                              <Component id="stdSolarCommercial" min="-2" pref="50" max="-2" attributes="0"/>
                                           </Group>
                                           <Group type="102" alignment="0" attributes="0">
                                               <Component id="jLabel97" min="-2" pref="139" max="-2" attributes="0"/>
                                               <EmptySpace type="separate" max="-2" attributes="0"/>
-                                              <Component id="stdSolidWasteKgPPCommertial" min="-2" pref="50" max="-2" attributes="0"/>
+                                              <Component id="stdSolidWasteKgPPCommercial" min="-2" pref="50" max="-2" attributes="0"/>
                                               <EmptySpace max="-2" attributes="0"/>
                                               <Component id="jLabel154" min="-2" max="-2" attributes="0"/>
                                           </Group>
                                           <Group type="102" alignment="0" attributes="0">
                                               <EmptySpace min="-2" pref="157" max="-2" attributes="0"/>
-                                              <Component id="wetGarbageInputCommertial" min="-2" pref="50" max="-2" attributes="0"/>
+                                              <Component id="wetGarbageInputCommercial" min="-2" pref="50" max="-2" attributes="0"/>
                                               <EmptySpace min="-2" pref="4" max="-2" attributes="0"/>
                                               <Component id="jLabel147" min="-2" pref="232" max="-2" attributes="0"/>
                                           </Group>
@@ -1111,7 +1111,7 @@
                                           <Group type="102" attributes="0">
                                               <Group type="103" groupAlignment="0" attributes="0">
                                                   <Group type="103" alignment="0" groupAlignment="3" attributes="0">
-                                                      <Component id="stdSolidWasteKgPPCommertial" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="stdSolidWasteKgPPCommercial" alignment="3" min="-2" max="-2" attributes="0"/>
                                                       <Component id="jLabel154" alignment="3" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                                   <Group type="102" alignment="0" attributes="0">
@@ -1121,13 +1121,13 @@
                                               </Group>
                                               <EmptySpace min="-2" pref="22" max="-2" attributes="0"/>
                                               <Group type="103" groupAlignment="0" attributes="0">
-                                                  <Component id="stdSolarCommertial" alignment="0" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="stdSolarCommercial" alignment="0" min="-2" max="-2" attributes="0"/>
                                                   <Component id="jLabel95" min="-2" max="-2" attributes="0"/>
                                               </Group>
                                               <EmptySpace max="32767" attributes="0"/>
                                               <Group type="103" groupAlignment="0" attributes="0">
                                                   <Group type="103" alignment="1" groupAlignment="3" attributes="0">
-                                                      <Component id="wetGarbageInputCommertial" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                      <Component id="wetGarbageInputCommercial" alignment="3" min="-2" max="-2" attributes="0"/>
                                                       <Component id="jLabel147" alignment="3" min="-2" max="-2" attributes="0"/>
                                                   </Group>
                                                   <Component id="jLabel99" alignment="1" min="-2" max="-2" attributes="0"/>
@@ -1135,17 +1135,17 @@
                                           </Group>
                                           <Group type="102" attributes="0">
                                               <Group type="103" groupAlignment="3" attributes="0">
-                                                  <Component id="stdwaterDemandCommertial" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="stdwaterDemandCommercial" alignment="3" min="-2" max="-2" attributes="0"/>
                                                   <Component id="jLabel152" alignment="3" min="-2" max="-2" attributes="0"/>
                                               </Group>
                                               <EmptySpace min="-2" pref="22" max="-2" attributes="0"/>
                                               <Group type="103" groupAlignment="3" attributes="0">
-                                                  <Component id="stdGasBankCommertial" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="stdGasBankCommercial" alignment="3" min="-2" max="-2" attributes="0"/>
                                                   <Component id="jLabel149" alignment="3" min="-2" max="-2" attributes="0"/>
                                               </Group>
                                               <EmptySpace type="separate" max="32767" attributes="0"/>
                                               <Group type="103" groupAlignment="3" attributes="0">
-                                                  <Component id="dryGarbageInputCommertial" alignment="3" min="-2" max="-2" attributes="0"/>
+                                                  <Component id="dryGarbageInputCommercial" alignment="3" min="-2" max="-2" attributes="0"/>
                                                   <Component id="jLabel150" alignment="3" min="-2" max="-2" attributes="0"/>
                                               </Group>
                                           </Group>
@@ -1174,16 +1174,16 @@
                         <Property name="enabled" type="boolean" value="false"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JTextField" name="stdwaterDemandCommertial">
+                    <Component class="javax.swing.JTextField" name="stdwaterDemandCommercial">
                     </Component>
-                    <Component class="javax.swing.JTextField" name="stdSolidWasteKgPPCommertial">
+                    <Component class="javax.swing.JTextField" name="stdSolidWasteKgPPCommercial">
                     </Component>
-                    <Component class="javax.swing.JTextField" name="stdSolarCommertial">
+                    <Component class="javax.swing.JTextField" name="stdSolarCommercial">
                       <Properties>
                         <Property name="enabled" type="boolean" value="false"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JTextField" name="stdGasBankCommertial">
+                    <Component class="javax.swing.JTextField" name="stdGasBankCommercial">
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel96">
                       <Properties>
@@ -1209,14 +1209,14 @@
                         <Property name="text" type="java.lang.String" value="&lt;html&gt;Dry Garbage&lt;/html&gt;"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JTextField" name="dryGarbageInputCommertial">
+                    <Component class="javax.swing.JTextField" name="dryGarbageInputCommercial">
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel99">
                       <Properties>
                         <Property name="text" type="java.lang.String" value="&lt;html&gt;Wet Garbage&lt;/html&gt;"/>
                       </Properties>
                     </Component>
-                    <Component class="javax.swing.JTextField" name="wetGarbageInputCommertial">
+                    <Component class="javax.swing.JTextField" name="wetGarbageInputCommercial">
                     </Component>
                     <Component class="javax.swing.JLabel" name="jLabel147">
                       <Properties>
@@ -3204,7 +3204,7 @@
                                           <EmptySpace type="unrelated" max="-2" attributes="0"/>
                                           <Component id="jLabel121" min="-2" max="-2" attributes="0"/>
                                           <EmptySpace min="-2" pref="27" max="-2" attributes="0"/>
-                                          <Component id="ugtDomesticWaterTankPercentCommertial" min="-2" pref="50" max="-2" attributes="0"/>
+                                          <Component id="ugtDomesticWaterTankPercentCommercial" min="-2" pref="50" max="-2" attributes="0"/>
                                           <EmptySpace min="-2" pref="43" max="-2" attributes="0"/>
                                           <Component id="jLabel105" min="-2" pref="95" max="-2" attributes="0"/>
                                           <EmptySpace min="-2" pref="5" max="-2" attributes="0"/>
@@ -3237,7 +3237,7 @@
                                               <Group type="102" attributes="0">
                                                   <Group type="103" groupAlignment="3" attributes="0">
                                                       <Component id="jLabel108" alignment="3" min="-2" pref="22" max="-2" attributes="0"/>
-                                                      <Component id="ugtDomesticWaterTankPercentCommertial" alignment="3" max="32767" attributes="0"/>
+                                                      <Component id="ugtDomesticWaterTankPercentCommercial" alignment="3" max="32767" attributes="0"/>
                                                       <Component id="jLabel105" alignment="3" min="-2" pref="22" max="-2" attributes="0"/>
                                                       <Component id="ugtRawWaterTankPercentCommertial" alignment="3" min="-2" max="-2" attributes="0"/>
                                                       <Component id="ugtFireFightingTankCommertial" alignment="3" max="32767" attributes="0"/>
@@ -3270,7 +3270,7 @@
                                     <Property name="text" type="java.lang.String" value="Domestic Tank"/>
                                   </Properties>
                                 </Component>
-                                <Component class="javax.swing.JTextField" name="ugtDomesticWaterTankPercentCommertial">
+                                <Component class="javax.swing.JTextField" name="ugtDomesticWaterTankPercentCommercial">
                                 </Component>
                                 <Component class="javax.swing.JLabel" name="jLabel105">
                                   <Properties>

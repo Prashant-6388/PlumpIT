@@ -6,6 +6,7 @@ package com.pc.plumbit;
 
 import com.pc.plumbit.enums.StandardType;
 import com.pc.exceptions.InvalidInputException;
+import com.pc.exceptions.PdfGenerationException;
 import com.pc.initializer.DataInitializer;
 import com.pc.plumbit.generator.PDFGenerator;
 import com.pc.plumbit.model.input.OfficeData;
@@ -39,6 +40,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.logging.Level;
 import javax.swing.ImageIcon;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
@@ -67,13 +69,13 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
     private DefaultTableModel dtmTowerDataOverview = new DefaultTableModel(0, 0);
     private DefaultTableModel dtmGroupedTowerTable = new DefaultTableModel(0, 0);    
     public static final String TYPE_RESIDENTIAL="Residential";
-    public static final String TYPE_COMMERTIAL="Commertial";
+    public static final String TYPE_COMMERCIAL="Commercial";
     private List<String> towerNameList = new ArrayList<>();
     private List<List<String>> groupedTowerNamesList = new ArrayList<>();
     public static Font baseFont = new Font("Segoe UI", Font.PLAIN, 12);
     private SaveListener saveListener;
     private CapacityDetails capacityDetailsResidential;
-    private CapacityDetails capacityDetailsCommertial;
+    private CapacityDetails capacityDetailsCommercial;
     private FireFightingDetails fireFightingDetails;
     private PlotArea plotArea;
 
@@ -140,7 +142,7 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
         }
         
         this.capacityDetailsResidential = projectData.getCapacityDetailsResidential();
-        this.capacityDetailsCommertial = projectData.getCapacityDetailsCommertial();
+        this.capacityDetailsCommercial = projectData.getCapacityDetailsCommercial();
         setOtherInputs(projectData);
                 
         createOverview();
@@ -237,12 +239,12 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
         dryGarbageInput.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_DRY_GARBAGE)));
         wetGarbageInput.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_WET_GARBAGE)));
         
-        stdwaterDemandCommertial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.WATER_DEMAND_COMMERTIAL)));
-        stdSolidWasteKgPPCommertial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_KG_PERSON_DAY_COMMERTIAL)));
-        stdGasBankCommertial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.GAS_BANK_COMMERTIAL)));
-        stdSolarCommertial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLAR_COMMERTIAL)));
-        dryGarbageInputCommertial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_DRY_GARBAGE_COMMERTIAL)));
-        wetGarbageInputCommertial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_WET_GARBAGE_COMMERTIAL)));
+        stdwaterDemandCommercial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.WATER_DEMAND_COMMERCIAL)));
+        stdSolidWasteKgPPCommercial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_KG_PERSON_DAY_COMMERCIAL)));
+        stdGasBankCommercial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.GAS_BANK_COMMERCIAL)));
+        stdSolarCommercial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLAR_COMMERCIAL)));
+        dryGarbageInputCommercial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_DRY_GARBAGE_COMMERCIAL)));
+        wetGarbageInputCommercial.setText(DataFormater.getStandardValue(standardValues.get(StandardType.SOLID_WASTE_WET_GARBAGE_COMMERCIAL)));
     }
     
     private void updateStandardFieldEditiability(boolean allowEdit){
@@ -272,12 +274,12 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
         dryGarbageInput.setEditable(allowEdit);
         wetGarbageInput.setEditable(allowEdit);
         
-        stdwaterDemandCommertial.setEditable(allowEdit);
-        stdSolidWasteKgPPCommertial.setEditable(allowEdit);
-        stdGasBankCommertial.setEditable(allowEdit);
-        stdSolarCommertial.setEditable(allowEdit);
-        dryGarbageInputCommertial.setEditable(allowEdit);
-        wetGarbageInputCommertial.setEditable(allowEdit);
+        stdwaterDemandCommercial.setEditable(allowEdit);
+        stdSolidWasteKgPPCommercial.setEditable(allowEdit);
+        stdGasBankCommercial.setEditable(allowEdit);
+        stdSolarCommercial.setEditable(allowEdit);
+        dryGarbageInputCommercial.setEditable(allowEdit);
+        wetGarbageInputCommercial.setEditable(allowEdit);
         
     }
     
@@ -361,16 +363,16 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
         jLabel27 = new javax.swing.JLabel();
         jLabel94 = new javax.swing.JLabel();
         jLabel95 = new javax.swing.JLabel();
-        stdwaterDemandCommertial = new javax.swing.JTextField();
-        stdSolidWasteKgPPCommertial = new javax.swing.JTextField();
-        stdSolarCommertial = new javax.swing.JTextField();
-        stdGasBankCommertial = new javax.swing.JTextField();
+        stdwaterDemandCommercial = new javax.swing.JTextField();
+        stdSolidWasteKgPPCommercial = new javax.swing.JTextField();
+        stdSolarCommercial = new javax.swing.JTextField();
+        stdGasBankCommercial = new javax.swing.JTextField();
         jLabel96 = new javax.swing.JLabel();
         jLabel97 = new javax.swing.JLabel();
         jLabel98 = new javax.swing.JLabel();
-        dryGarbageInputCommertial = new javax.swing.JTextField();
+        dryGarbageInputCommercial = new javax.swing.JTextField();
         jLabel99 = new javax.swing.JLabel();
-        wetGarbageInputCommertial = new javax.swing.JTextField();
+        wetGarbageInputCommercial = new javax.swing.JTextField();
         jLabel147 = new javax.swing.JLabel();
         jLabel149 = new javax.swing.JLabel();
         jLabel150 = new javax.swing.JLabel();
@@ -528,7 +530,7 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
         jPanel16 = new javax.swing.JPanel();
         jLabel28 = new javax.swing.JLabel();
         jLabel108 = new javax.swing.JLabel();
-        ugtDomesticWaterTankPercentCommertial = new javax.swing.JTextField();
+        ugtDomesticWaterTankPercentCommercial = new javax.swing.JTextField();
         jLabel105 = new javax.swing.JLabel();
         ugtRawWaterTankPercentCommertial = new javax.swing.JTextField();
         jLabel111 = new javax.swing.JLabel();
@@ -1070,7 +1072,7 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
         jLabel95.setText("Solar ");
         jLabel95.setEnabled(false);
 
-        stdSolarCommertial.setEnabled(false);
+        stdSolarCommercial.setEnabled(false);
 
         jLabel96.setBackground(new java.awt.Color(204, 255, 255));
         jLabel96.setFont(new java.awt.Font("Segoe UI", 1, 12)); // NOI18N
@@ -1112,29 +1114,29 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
                         .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
                                 .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(stdwaterDemandCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(dryGarbageInputCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(stdwaterDemandCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(dryGarbageInputCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(6, 6, 6)
                                 .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel149)
                                     .addComponent(jLabel150)
                                     .addComponent(jLabel152, javax.swing.GroupLayout.PREFERRED_SIZE, 72, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                            .addComponent(stdGasBankCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addComponent(stdGasBankCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 120, Short.MAX_VALUE)
                         .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
                                 .addComponent(jLabel95)
                                 .addGap(127, 127, 127)
-                                .addComponent(stdSolarCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(stdSolarCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
                                 .addComponent(jLabel97, javax.swing.GroupLayout.PREFERRED_SIZE, 139, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(18, 18, 18)
-                                .addComponent(stdSolidWasteKgPPCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(stdSolidWasteKgPPCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(jLabel154))
                             .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
                                 .addGap(157, 157, 157)
-                                .addComponent(wetGarbageInputCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(wetGarbageInputCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGap(4, 4, 4)
                                 .addComponent(jLabel147, javax.swing.GroupLayout.PREFERRED_SIZE, 232, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(jLabel99, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -1159,32 +1161,32 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
                             .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
                                 .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(stdSolidWasteKgPPCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(stdSolidWasteKgPPCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(jLabel154))
                                     .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
                                         .addGap(4, 4, 4)
                                         .addComponent(jLabel97, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)))
                                 .addGap(22, 22, 22)
                                 .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(stdSolarCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(stdSolarCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel95))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                        .addComponent(wetGarbageInputCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addComponent(wetGarbageInputCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                         .addComponent(jLabel147, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                     .addComponent(jLabel99, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                             .addGroup(consumptionParamPanel1Layout.createSequentialGroup()
                                 .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(stdwaterDemandCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(stdwaterDemandCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel152))
                                 .addGap(22, 22, 22)
                                 .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(stdGasBankCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(stdGasBankCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel149))
                                 .addGap(18, 18, Short.MAX_VALUE)
                                 .addGroup(consumptionParamPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(dryGarbageInputCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(dryGarbageInputCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jLabel150))))
                         .addGap(32, 32, 32))))
         );
@@ -2271,7 +2273,7 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jLabel121)
                 .addGap(27, 27, 27)
-                .addComponent(ugtDomesticWaterTankPercentCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(ugtDomesticWaterTankPercentCommercial, javax.swing.GroupLayout.PREFERRED_SIZE, 50, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(43, 43, 43)
                 .addComponent(jLabel105, javax.swing.GroupLayout.PREFERRED_SIZE, 95, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(5, 5, 5)
@@ -2302,7 +2304,7 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
                     .addGroup(jPanel16Layout.createSequentialGroup()
                         .addGroup(jPanel16Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(jLabel108, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(ugtDomesticWaterTankPercentCommertial)
+                            .addComponent(ugtDomesticWaterTankPercentCommercial)
                             .addComponent(jLabel105, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(ugtRawWaterTankPercentCommertial, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(ugtFireFightingTankCommertial)
@@ -2835,7 +2837,12 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
                 String pdfFileLocation = pdfData.getPdfLocation()+ "/" + pdfData.getProjectName()+".pdf";
                 File outputFile = new File(pdfFileLocation);
                 if(!outputFile.exists()) {
-                    PDFGenerator.generatePDF(pdfData, this);
+                    PDFGenerator pdfGenerator = new PDFGenerator(pdfData, this);
+                    try {
+                        pdfGenerator.generatePDF();
+                    } catch (PdfGenerationException ex) {
+                        JOptionPane.showMessageDialog(this, "PDF generation failed", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
                 } else {
                     JOptionPane.showMessageDialog(this, "PDF with same project name exist", "Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -2851,7 +2858,7 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
                 .setOutsideAreaMap(outsideAreaMap)
                 .setGroupedTowerNamesList(groupedTowerNamesList)
                 .setCapacityDetailsResidential(capacityDetailsResidential)
-                .setCapacityDetailsCommertial(capacityDetailsCommertial)
+                .setCapacityDetailsCommertial(capacityDetailsCommercial)
                 .setFireFightingDetails(fireFightingDetails)
                 .setPlotArea(plotArea)
                 .setProjectName(projectNameInput.getText());
@@ -3207,12 +3214,12 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
             standardValMap.put(StandardType.SOLID_WASTE_WET_GARBAGE, getUpdatedStandardVal(StandardType.SOLID_WASTE_WET_GARBAGE, wetGarbageInput.getText()));
             
 
-            standardValMap.put(StandardType.WATER_DEMAND_COMMERTIAL, getUpdatedStandardVal(StandardType.WATER_DEMAND_COMMERTIAL, stdwaterDemandCommertial.getText()));
-            standardValMap.put(StandardType.SOLID_WASTE_KG_PERSON_DAY_COMMERTIAL, getUpdatedStandardVal(StandardType.SOLID_WASTE_KG_PERSON_DAY_COMMERTIAL, stdSolidWasteKgPPCommertial.getText()));
-            standardValMap.put(StandardType.GAS_BANK_COMMERTIAL, getUpdatedStandardVal(StandardType.GAS_BANK_COMMERTIAL, stdGasBankCommertial.getText()));
-            standardValMap.put(StandardType.SOLAR_COMMERTIAL, getUpdatedStandardVal(StandardType.SOLAR_COMMERTIAL, stdSolarCommertial.getText()));
-            standardValMap.put(StandardType.SOLID_WASTE_DRY_GARBAGE_COMMERTIAL, getUpdatedStandardVal(StandardType.SOLID_WASTE_DRY_GARBAGE_COMMERTIAL, dryGarbageInputCommertial.getText()));
-            standardValMap.put(StandardType.SOLID_WASTE_WET_GARBAGE_COMMERTIAL, getUpdatedStandardVal(StandardType.SOLID_WASTE_WET_GARBAGE_COMMERTIAL, wetGarbageInputCommertial.getText()));
+            standardValMap.put(StandardType.WATER_DEMAND_COMMERCIAL, getUpdatedStandardVal(StandardType.WATER_DEMAND_COMMERCIAL, stdwaterDemandCommercial.getText()));
+            standardValMap.put(StandardType.SOLID_WASTE_KG_PERSON_DAY_COMMERCIAL, getUpdatedStandardVal(StandardType.SOLID_WASTE_KG_PERSON_DAY_COMMERCIAL, stdSolidWasteKgPPCommercial.getText()));
+            standardValMap.put(StandardType.GAS_BANK_COMMERCIAL, getUpdatedStandardVal(StandardType.GAS_BANK_COMMERCIAL, stdGasBankCommercial.getText()));
+            standardValMap.put(StandardType.SOLAR_COMMERCIAL, getUpdatedStandardVal(StandardType.SOLAR_COMMERCIAL, stdSolarCommercial.getText()));
+            standardValMap.put(StandardType.SOLID_WASTE_DRY_GARBAGE_COMMERCIAL, getUpdatedStandardVal(StandardType.SOLID_WASTE_DRY_GARBAGE_COMMERCIAL, dryGarbageInputCommercial.getText()));
+            standardValMap.put(StandardType.SOLID_WASTE_WET_GARBAGE_COMMERCIAL, getUpdatedStandardVal(StandardType.SOLID_WASTE_WET_GARBAGE_COMMERCIAL, wetGarbageInputCommercial.getText()));
 
             tabbedPane.setEnabledAt(1, true);
             tabbedPane.setSelectedIndex(1);
@@ -3413,7 +3420,7 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
     private javax.swing.JTextField domesticSewerPercent;
     private javax.swing.JTextField domesticSewerPercentCommertial;
     private javax.swing.JTextField dryGarbageInput;
-    private javax.swing.JTextField dryGarbageInputCommertial;
+    private javax.swing.JTextField dryGarbageInputCommercial;
     private javax.swing.JTextField extraAreaCatered;
     private javax.swing.JTextField flushingSewerPercent;
     private javax.swing.JTextField flushingSewerPercentCommertial;
@@ -3664,13 +3671,13 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
     private javax.swing.JTextField sqMtrPerPersonAtGroundInput;
     private javax.swing.JTextField sqMtrPerPersonOfficeInput;
     private javax.swing.JTextField stdGasBank;
-    private javax.swing.JTextField stdGasBankCommertial;
+    private javax.swing.JTextField stdGasBankCommercial;
     private javax.swing.JTextField stdSolar;
-    private javax.swing.JTextField stdSolarCommertial;
-    private javax.swing.JTextField stdSolidWasteKgPPCommertial;
+    private javax.swing.JTextField stdSolarCommercial;
+    private javax.swing.JTextField stdSolidWasteKgPPCommercial;
     private javax.swing.JTextField stdSolidWasteKgPPD;
     private javax.swing.JTextField stdwaterDemand;
-    private javax.swing.JTextField stdwaterDemandCommertial;
+    private javax.swing.JTextField stdwaterDemandCommercial;
     private javax.swing.JTextField swimmingAreaInput;
     private javax.swing.JComboBox<String> swimmingPoolCapacity;
     private javax.swing.JTabbedPane tabbedPane;
@@ -3684,7 +3691,7 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
     private javax.swing.JTextField towerNameInput;
     private javax.swing.JPanel typePanel;
     private javax.swing.JTextField ugtDomesticWaterTankPercent;
-    private javax.swing.JTextField ugtDomesticWaterTankPercentCommertial;
+    private javax.swing.JTextField ugtDomesticWaterTankPercentCommercial;
     private javax.swing.JTextField ugtFireFightingTank;
     private javax.swing.JTextField ugtFireFightingTankCommertial;
     private javax.swing.JTextField ugtFlushingTank;
@@ -3694,7 +3701,7 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
     private javax.swing.JPanel waterDemandOverviewPanel;
     private javax.swing.JButton waterDemandPDFBtn;
     private javax.swing.JTextField wetGarbageInput;
-    private javax.swing.JTextField wetGarbageInputCommertial;
+    private javax.swing.JTextField wetGarbageInputCommercial;
     // End of variables declaration//GEN-END:variables
 
     private void addCheckBoxForTower(String towerName) {
@@ -3965,7 +3972,7 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
             STPCapacity stpCapacityCommertial = new STPCapacity(domesticSewerPercentCommertialVal, flushSewerPercentCommertialVal);
             
             capacityDetailsResidential = new CapacityDetails(ugtCapacityResidential, ohtCapacityResidential, stpCapacityResidential);
-            capacityDetailsCommertial = new CapacityDetails(ugtCapacityCommertial, ohtCapacityCommertial, stpCapacityCommertial);
+            capacityDetailsCommercial = new CapacityDetails(ugtCapacityCommertial, ohtCapacityCommertial, stpCapacityCommertial);
 
             fireFightingDetails = new FireFightingDetails(heightOfTallestBldVal, basementAreaVal, residualHeadPlumbingVal, residualHeadFireVal, frictionLossInputVal);
             plotArea = new PlotArea(terraceAreaVal, greenAreaVal, pavedAreaVal, totalPlotAreaVal, extraAreaCateredVal);
@@ -3999,17 +4006,17 @@ public class DataCalculator extends javax.swing.JFrame implements SaveListener {
         domesticSewerPercent.setText(String.valueOf(projectData.getCapacityDetailsResidential().getsTPCapacity().getDomesticFlow()));
         flushingSewerPercent.setText(String.valueOf(projectData.getCapacityDetailsResidential().getsTPCapacity().getFlushingFlow()));
         //commertial
-        ugtDomesticWaterTankPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getuGTCapacity().getDomesticTank()));
-        ugtFlushingTankCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getuGTCapacity().getFlushingTank()));
-        ugtRawWaterTankPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getuGTCapacity().getRawWaterTank()));
-        ugtFireFightingTankCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getuGTCapacity().getFireFightingTank()));
+        ugtDomesticWaterTankPercentCommercial.setText(String.valueOf(projectData.getCapacityDetailsCommercial().getuGTCapacity().getDomesticTank()));
+        ugtFlushingTankCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommercial().getuGTCapacity().getFlushingTank()));
+        ugtRawWaterTankPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommercial().getuGTCapacity().getRawWaterTank()));
+        ugtFireFightingTankCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommercial().getuGTCapacity().getFireFightingTank()));
         
-        ohtDomesticTankPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getoHTCapacity().getDomesticTank()));
-        ohtFlushingTankCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getoHTCapacity().getFlushingTank()));
-        ohtFireFightingTankCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getoHTCapacity().getFireFightingTank()));
+        ohtDomesticTankPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommercial().getoHTCapacity().getDomesticTank()));
+        ohtFlushingTankCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommercial().getoHTCapacity().getFlushingTank()));
+        ohtFireFightingTankCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommercial().getoHTCapacity().getFireFightingTank()));
         
-        domesticSewerPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getsTPCapacity().getDomesticFlow()));
-        flushingSewerPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommertial().getsTPCapacity().getFlushingFlow()));
+        domesticSewerPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommercial().getsTPCapacity().getDomesticFlow()));
+        flushingSewerPercentCommertial.setText(String.valueOf(projectData.getCapacityDetailsCommercial().getsTPCapacity().getFlushingFlow()));
     
         //fireFighting
         heightOfTallestBld.setText(String.valueOf(projectData.getFireFightingDetails().getHeightOfTallestBuilding()));

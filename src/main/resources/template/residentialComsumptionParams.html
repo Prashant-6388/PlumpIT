@@ -1,0 +1,121 @@
+<html>
+    <head>
+        <style>
+            .table-container {
+                display: flex;
+                justify-content: space-between;
+                margin: 5px;
+            }
+
+            .header-row {
+                font-size: 16px !important;
+                background-color: #367aa0;
+                color: white;
+                text-align: center;
+            }
+
+            .bold-data {
+                font-weight: bold !important;
+            }
+
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            /* Styling for inner tables */
+
+            .innerTable {
+                font-family: "Times New Roman", Times, serif;
+                width: 95%;
+                border-collapse: separate;
+                border-spacing: 0;
+                border: 1px solid #ddd;
+                border-radius: 15px;
+                overflow: hidden;
+            }
+
+            .innerTable td {
+                font-size: 14px;
+            }
+
+            /* Common styling for cells in inner tables */
+
+            .innerTable th,
+            td {
+                padding: 7px;
+                text-align: left;
+            }
+
+            /* Specific styling for each table */
+
+            .innerTable th {
+                background-color: #4CAF50;
+                color: white;
+            }
+
+            /* Styling for bold rows */
+
+            .innerTable .bold-row {
+                font-weight: bold;
+                background-color: #f2f2f2;
+            }
+
+            /* Rounded corners for the first and last rows of the inner tables */
+
+            .innerTable tr:first-child td:first-child {
+                border-top-left-radius: 15px;
+            }
+
+            .innerTable tr:first-child td:last-child {
+                border-top-right-radius: 15px;
+            }
+
+            .innerTable tr:last-child td:first-child {
+                border-bottom-left-radius: 15px;
+            }
+
+            .innerTable tr:last-child td:last-child {
+                border-bottom-right-radius: 15px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div>
+            <table class='innerTable'>
+                <tr>
+                    <td class='header-row' colspan='7'>Residential Consumption Parameters</td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>Water Demand</td>
+                    <td>${WATER_DEMAND}</td>
+                    <td>Liters/day</td>
+                    <td></td>
+                    <td class='bold-data'>Solid Waste</td>
+                    <td>${SOLID_WASTE_KG_PERSON_DAY}</td>
+                    <td>Kg/p/d</td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>Gas Bank</td>
+                    <td>${GAS_BANK}</td>
+                    <td>kg/flat/day</td>
+                    <td></td>
+                    <td class='bold-data'>Solar</td>
+                    <td>${SOLAR}</td>
+                    <td>lcpd</td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>Dry Garbage</td>
+                    <td>${SOLID_WASTE_DRY_GARBAGE}</td>
+                    <td>%</td>
+                    <td></td>
+                    <td class='bold-data'>Wet Garbage</td>
+                    <td>${SOLID_WASTE_WET_GARBAGE}</td>
+                    <td>% of total waste generation</td>
+                </tr>
+            </table>
+        </div>
+    </body>
+</html>

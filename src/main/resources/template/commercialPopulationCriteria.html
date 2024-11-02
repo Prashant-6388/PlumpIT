@@ -1,0 +1,109 @@
+<html>
+    <head>
+        <style>
+            .table-container {
+                display: flex;
+                justify-content: space-between;
+                margin: 5px;
+            }
+
+            .header-row {
+                font-size: 16px !important;
+                background-color: #367aa0;
+                color: white;
+                text-align: center;
+            }
+
+            .bold-data {
+                font-weight: bold !important;
+            }
+
+            table {
+                border-collapse: collapse;
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            /* Styling for inner tables */
+
+            .innerTable {
+                font-family: "Times New Roman", Times, serif;
+                width: 95%;
+                border-collapse: separate;
+                border-spacing: 0;
+                border: 1px solid #ddd;
+                border-radius: 15px;
+                overflow: hidden;
+            }
+
+            .innerTable td {
+                font-size: 14px;
+            }
+
+            /* Common styling for cells in inner tables */
+
+            .innerTable th,
+            td {
+                padding: 7px;
+                text-align: left;
+            }
+
+            /* Specific styling for each table */
+
+            .innerTable th {
+                background-color: #FF5733;
+                color: white;
+            }
+
+            /* Styling for bold rows */
+
+            .innerTable .bold-row {
+                font-weight: bold;
+                background-color: #f2f2f2;
+            }
+
+            /* Rounded corners for the first and last rows of the inner tables */
+
+            .innerTable tr:first-child td:first-child {
+                border-top-left-radius: 15px;
+            }
+
+            .innerTable tr:first-child td:last-child {
+                border-top-right-radius: 15px;
+            }
+
+            .innerTable tr:last-child td:first-child {
+                border-bottom-left-radius: 15px;
+            }
+
+            .innerTable tr:last-child td:last-child {
+                border-bottom-right-radius: 15px;
+            }
+        </style>
+    </head>
+
+    <body>
+        <div>
+            <table class='innerTable'>
+                <tr>
+                    <td class='header-row' colspan='3'>Commertial Population Criteria</td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>Office</td>
+                    <td>${SQ_MTR_PER_PERSON_OFFICE}</td>
+                    <td>Sq. Mtr. Per Person</td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>Merchantial Ground floor</td>
+                    <td>${SQ_MTR_PER_PERSON_AT_GROUND}</td>
+                    <td>Sq. Mtr. Per Person</td>
+                </tr>
+                <tr>
+                    <td class='bold-data'>Merchantial Above Ground floor</td>
+                    <td>${SQ_MTR_PER_PERSON_ABOVE_GROUND}</td>
+                    <td>Sq. Mtr. Per Person</td>
+                </tr>
+            </table>
+        </div>
+    </body>
+</html>
